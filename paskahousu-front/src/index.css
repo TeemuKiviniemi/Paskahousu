@@ -21,16 +21,14 @@ button {
 	flex-direction: column;
 	min-height: 100vh;
 	min-width: 100vw;
-	background-color: orange;
+	background: linear-gradient(rgb(255, 187, 29), rgb(255, 165, 0));
 	transition: background-color 800ms;
 }
 .red {
-	background-color: black;
+	background: rgb(104, 0, 0);
 	color: white;
 }
-.players {
-	display: flex;
-}
+
 .player-frame {
 	display: flex;
 	align-items: center;
@@ -60,22 +58,14 @@ button {
 	transform: scale(1.03);
 }
 
-.set-name {
-	position: absolute;
+.info-container {
 	display: flex;
-	justify-content: center;
-	align-items: center;
-	height: 100vh;
-	width: 100vw;
-	z-index: 20;
-	background-color: rgba(255, 255, 255, 0.15);
-	backdrop-filter: blur(3px);
+	flex-direction: column;
 }
 
 .container {
 	display: flex;
 	justify-content: center;
-	width: 100vw;
 }
 
 .other-players {

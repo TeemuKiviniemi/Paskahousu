@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import Player from "./components/Player";
-import OtherPlayers from "./components/OtherPlayers";
-import SetGame from "./components/SetGame";
+import GameInfo from "./components/GameInfo";
+import JoinToGame from "./components/JoinToGame";
 import Log from "./components/Log";
 import { io } from "socket.io-client";
 import { BrowserRouter as Router, Route } from "react-router-dom";
+import { checkValidMove } from "./utils/utils";
 
 const socket = io("http://localhost:4000");
 
@@ -17,14 +18,14 @@ function App() {
 		value: 0,
 		code: 0,
 	});
-	const [name, setName] = useState();
+	const [username, setUsername] = useState();
 	const [gameInfo, setGameInfo] = useState([]);
 	const [stack, setStack] = useState([]);
 	const [turn, setTurn] = useState(false);
-	const [playCards, setPlayCards] = useState([]);
+	const [selectedCards, setSelectedCards] = useState([]);
 	const [log, setLog] = useState([]);
 
-	// Join game and open connection to server to get data
+	// Open connection to server to get data
 	useEffect(() => {
 		// send info about latest cards that has been played
 		socket.on("latest", (card) => {
@@ -41,6 +42,7 @@ function App() {
 			setGameInfo(player);
 		});
 
+		// get stack of cards that have been played
 		socket.on("stack", (cards) => {
 			setStack(cards);
 		});
@@ -66,11 +68,11 @@ function App() {
 	}, []);
 
 	const joinGame = () => {
-		socket.emit("join_game", name);
+		socket.emit("join_game", username);
 	};
 
-	const handleChange = (e) => {
-		setName(e.target.value);
+	const handleUsernameChange = (e) => {
+		setUsername(e.target.value);
 	};
 
 	// loads new deck and set 3 new cards to player
@@ -98,64 +100,23 @@ function App() {
 		socket.emit("turn", true);
 	};
 
-	// Change card value from text to int
-	const returnInt = (text) => {
-		if (text === "QUEEN") {
-			return 11;
-		} else if (text === "KING") {
-			return 12;
-		} else if (text === "JACK") {
-			return 11;
-		} else if (text === "ACE") {
-			return 1;
-		} else {
-			return parseInt(text);
-		}
-	};
-
-	// Checks if players card can be played
-	const checkValidMove = (card) => {
-		const latest = returnInt(latestCard.value);
-		card = returnInt(card);
-
-		if (card === 2) {
-			return "jatka";
-		} else if (latest === 2) {
-			if (card === 1 || card === 10) {
-				return "kaatuu";
-			} else {
-				return "ok";
-			}
-		} else if (card === 1 && latest >= 10) {
-			return "kaatuu";
-		} else if (card === 10 && latest <= 9) {
-			return "kaatuu";
-		} else if (card >= 11 && latest >= 7) {
-			return "ok";
-		} else if (card >= latest) {
-			return "ok";
-		} else {
-			return "not ok";
-		}
-	};
-
 	// Select multiple cards to play next
 	// These cards need to have same value
 	const selectCardsToPlay = (num) => {
-		if (playCards.length > 0) {
-			if (playCards.indexOf(deck[num]) !== -1) {
-				const cards = playCards.filter((item) => item !== deck[num]);
+		if (selectedCards.length > 0) {
+			if (selectedCards.indexOf(deck[num]) !== -1) {
+				const cards = selectedCards.filter((item) => item !== deck[num]);
 				console.log(cards);
-				setPlayCards(cards);
-			} else if (playCards[playCards.length - 1].value === deck[num].value) {
-				const cards = [...playCards, deck[num]];
-				setPlayCards(cards);
+				setSelectedCards(cards);
+			} else if (selectedCards[selectedCards.length - 1].value === deck[num].value) {
+				const cards = [...selectedCards, deck[num]];
+				setSelectedCards(cards);
 			} else {
-				setPlayCards([]);
+				setSelectedCards([]);
 				alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
 			}
 		} else {
-			setPlayCards([deck[num]]);
+			setSelectedCards([deck[num]]);
 		}
 	};
 
@@ -170,18 +131,10 @@ function App() {
 					setDeck(data.cards);
 					socket.emit("remaining", data.remaining);
 				} else if (num === "random") {
-					let cards = [...deck];
-					cards.push(data.cards[0]);
-					setDeck(cards);
+					setDeck([...deck, data.cards[0]]);
 					socket.emit("remaining", data.remaining);
 				} else {
-					let newDeck = [];
-					deck.map((card) => {
-						if (playCards.indexOf(card) === -1) {
-							newDeck.push(card);
-						}
-					});
-
+					const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 					setDeck([...newDeck, ...data.cards]);
 					socket.emit("remaining", data.remaining);
 				}
@@ -189,69 +142,63 @@ function App() {
 	};
 
 	// Sets latest card and send it to other players
-	// Loads new card from API if remaining > deck.lenght
+	// Loads new card from API if remaining > deck.length
 	// Sets new cards to players deck
 	const setCard = (num) => {
 		const latest = {
-			image: playCards[0].image,
-			value: playCards[0].value,
-			code: playCards[0].code,
+			image: selectedCards[0].image,
+			value: selectedCards[0].value,
+			code: selectedCards[0].code,
 		};
 
 		socket.emit("latest", latest);
 
 		if (deck.length > 3 || remaining === 0) {
-			if (deck.length - playCards.length < 3) {
-				const amountToFetch = 3 - (deck.length - playCards.length);
+			if (deck.length - selectedCards.length < 3) {
+				const amountToFetch = 3 - (deck.length - selectedCards.length);
 				fetchCard(amountToFetch, num);
 				socket.emit("cards", deck.length - 1);
-				socket.emit("stack", playCards);
+				socket.emit("stack", selectedCards);
 			} else {
-				let newDeck = [];
-
-				deck.map((card) => {
-					if (playCards.indexOf(card) === -1) {
-						newDeck.push(card);
-					}
-				});
+				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 				setDeck(newDeck);
 				socket.emit("cards", deck.length - 1);
-				socket.emit("stack", playCards);
+				socket.emit("stack", selectedCards);
 			}
 		} else if (remaining > 0) {
-			fetchCard(playCards.length, num);
+			fetchCard(selectedCards.length, num);
 			socket.emit("cards", deck.length);
-			socket.emit("stack", playCards);
+			socket.emit("stack", selectedCards);
 		}
 	};
 
 	const loadNewCard = (num) => {
-		if (turn === true && playCards.length > 0) {
-			const valid = checkValidMove(playCards[0].value);
+		if (turn === true && selectedCards.length > 0) {
+			const valid = checkValidMove(selectedCards[0].value, latestCard.value);
 
-			if (valid === "ok" && playCards.length === 4) {
+			if (valid === "ok" && selectedCards.length === 4) {
 				setCard(num);
 				socket.emit("stack", "empty");
 				socket.emit("latest", { image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
-				socket.emit("log", `Kaatuu! ${name} pelasi: ${playCards[0].code}`);
-				setPlayCards([]);
+				socket.emit("log", `Kaatuu! ${username} pelasi: ${selectedCards[0].code}`);
+				setSelectedCards([]);
 			} else if (valid === "ok") {
 				setCard(num);
-				socket.emit("log", `${name} pelasi ${playCards.length} kpl ${playCards[0].code}`);
+				socket.emit("log", `${username} pelasi ${selectedCards.length} kpl ${selectedCards[0].code}`);
 				changeTurn();
-				setPlayCards([]);
+				setSelectedCards([]);
 			} else if (valid === "kaatuu") {
 				setCard(num);
-				socket.emit("log", `Kaatuu! ${name} pelasi ${playCards[0].code}`);
+				socket.emit("log", `Kaatuu! ${username} pelasi ${selectedCards[0].code}`);
 				socket.emit("stack", "empty");
 				socket.emit("latest", { image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
-				setPlayCards([]);
+				setSelectedCards([]);
 			} else if (valid === "jatka") {
 				setCard(num);
-				socket.emit("log", `${name} pelasi ${playCards[0].code}`);
-				setPlayCards([]);
+				socket.emit("log", `${username} pelasi ${selectedCards[0].code}`);
+				setSelectedCards([]);
 			} else if (valid === "not ok") {
-				setPlayCards([]);
+				setSelectedCards([]);
 				alert("You cant play this card!");
 			}
 		} else {
@@ -259,43 +206,23 @@ function App() {
 		}
 	};
 
-	// try random card from the pack
-	const randomCards = () => {
-		fetchCard(1, "random");
-	};
-
 	return (
 		<Router>
 			<div className={`App ${remaining <= 5 ? "red" : null}`}>
 				<Route path="/" exact>
-					<SetGame joinGame={joinGame} handleChange={handleChange} />
+					<JoinToGame joinGame={joinGame} handleUsernameChange={handleUsernameChange} />
 				</Route>
 
 				<Route path="/game">
-					{/* <div style={{ position: "absolute", top: 10 }}>	
-						<button onClick={() => fetchCard(3, "all")}>fetch card</button>
-						<button onClick={() => suffleDeck()}>new deck</button>
-						<button onClick={() => console.log(playCards)}>Show stack</button>
-					</div > */}
-
-					<h2>Cards remaining: {remaining}</h2>
-					<div className="container" on>
-						<OtherPlayers gameInfo={gameInfo} />
-						<div className="stack-and-latest">
-							<img className="latest-img" src={latestCard.image} alt="" onClick={() => raiseCard()} />
-						</div>
-					</div>
-
-					<div className="players">
-						<Player
-							turn={turn}
-							loadNewCard={loadNewCard}
-							deck={deck}
-							fetchCard={fetchCard}
-							selectCardsToPlay={selectCardsToPlay}
-							playCards={playCards}
-						/>
-					</div>
+					<GameInfo remaining={remaining} gameInfo={gameInfo} latestCard={latestCard} raiseCard={raiseCard} />
+					<Player
+						turn={turn}
+						loadNewCard={loadNewCard}
+						deck={deck}
+						fetchCard={fetchCard}
+						selectCardsToPlay={selectCardsToPlay}
+						playCards={selectedCards}
+					/>
 					<Log log={log} />
 				</Route>
 			</div>
