@@ -1,0 +1,9 @@
+{
+    "name": "paskahousu-backend",
+    "version": "0.0.1",
+    "description": "paskahousu-backend",
+    "dependencies": {
+        "express": "^4.17.1",
+        "socket.io": "^3.1.1"
+    }
+}
