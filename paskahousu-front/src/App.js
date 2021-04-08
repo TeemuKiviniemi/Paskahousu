@@ -57,10 +57,10 @@ function App() {
 		socket.on("onStart", async (start) => {
 			if (start === true) {
 				suffleDeck();
-				const newCards = await fetchCard(3, "all");
+				const newCards = await fetchCard(3);
 				setDeck(newCards);
 			} else {
-				const newCards = await fetchCard(3, "all");
+				const newCards = await fetchCard(3);
 				setDeck(newCards);
 			}
 		});
@@ -98,6 +98,12 @@ function App() {
 		socket.emit("turn", true);
 	};
 
+	const drawRandomCard = async () => {
+		const newCard = await fetchCard(1);
+		console.log(newCard);
+		setDeck([...deck, newCard[0]]);
+	};
+
 	// Select multiple cards to play next
 	// These cards need to have same value
 	const selectCardsToPlay = (num) => {
@@ -118,8 +124,9 @@ function App() {
 	};
 
 	// fetch new card, update players deck and send num of remaining to server
-	const fetchCard = async (amount, num) => {
+	const fetchCard = async (amount) => {
 		const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${amount}`);
+		socket.emit("remaining", newCards.data.remaining);
 		return newCards.data.cards;
 	};
 
@@ -138,7 +145,7 @@ function App() {
 		if (deck.length > 3 || remaining === 0) {
 			if (deck.length - selectedCards.length < 3) {
 				const amountToFetch = 3 - (deck.length - selectedCards.length);
-				const newCards = await fetchCard(amountToFetch, num);
+				const newCards = await fetchCard(amountToFetch);
 				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 				socket.emit("cards", deck.length - amountToFetch);
 				setDeck([...newDeck, ...newCards]);
@@ -147,7 +154,7 @@ function App() {
 				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
 			}
 		} else if (remaining > 0) {
-			const newCards = await fetchCard(selectedCards.length, num);
+			const newCards = await fetchCard(selectedCards.length);
 			const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 			socket.emit("cards", newCards.length + newDeck.length);
 			setDeck([...newCards, ...newDeck]);
@@ -200,7 +207,7 @@ function App() {
 						turn={turn}
 						gameLogic={gameLogic}
 						deck={deck}
-						fetchCard={fetchCard}
+						drawRandomCard={drawRandomCard}
 						selectCardsToPlay={selectCardsToPlay}
 						playCards={selectedCards}
 					/>

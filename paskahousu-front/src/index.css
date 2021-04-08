@@ -19,6 +19,7 @@ button {
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
+	color: rgb(37, 37, 37);
 	min-height: 100vh;
 	min-width: 100vw;
 	background: linear-gradient(rgb(255, 187, 29), rgb(255, 165, 0));
@@ -114,11 +115,13 @@ ul {
 	overflow: scroll;
 	scroll-behavior: auto;
 	left: 0;
-	top: 120px;
-	border-top: 1px solid gray;
-	border-bottom: 1px solid gray;
+	top: 10px;
 	padding-top: 15px;
 	padding-bottom: 15px;
+	color: rgb(60, 60, 60);
+	font-size: 14px;
+	-webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
+	mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 }
 .li-log {
 	margin-left: 25px;
