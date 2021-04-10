@@ -8,7 +8,11 @@ let turn = 0;
 let log = [];
 
 io.on("connection", (socket) => {
-	socket.on("join_game", (username) => {
+	socket.on("join_game", (data) => {
+		let username = data.username;
+		let state = data.gameState;
+		console.log("STATE", state);
+
 		if (username !== null) {
 			const user = {
 				id: socket.id,
@@ -31,6 +35,9 @@ io.on("connection", (socket) => {
 			io.emit("players", players);
 			io.emit("log", log);
 			console.log(user);
+
+			state.players = players;
+			io.emit("updateGame", state);
 		}
 	});
 
@@ -45,31 +52,14 @@ io.on("connection", (socket) => {
 		});
 	});
 
-	socket.on("cards", (cards) => {
-		players.map((player) => {
-			if (socket.id === player.id) {
-				player.cards = cards;
-			}
-		});
-		io.emit("players", players);
-	});
-
-	socket.on("latest", (card) => {
-		io.emit("latest", card);
-	});
-
-	socket.on("remaining", (remaining) => {
-		io.emit("remaining", remaining);
-	});
-
-	socket.on("stack", (stack) => {
-		stack === "empty" ? (cardsInStack = []) : cardsInStack.push(...stack);
-		io.emit("stack", cardsInStack);
-	});
-
 	socket.on("log", (item) => {
 		log.unshift(item);
 		io.emit("log", log);
+	});
+
+	socket.on("updateGame", (gameState) => {
+		console.log("UPDATE", gameState);
+		io.emit("updateGame", gameState);
 	});
 
 	socket.on("disconnect", () => {
