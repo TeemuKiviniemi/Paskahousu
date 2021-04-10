@@ -60,17 +60,31 @@ button {
 }
 
 .info-container {
-	display: flex;
-	flex-direction: column;
+	display: grid;
+	grid-template-columns: 50% 50%;
+	grid-template-rows: 25% auto;
+	column-gap: 15px;
+	justify-items: center;
 }
 
-.container {
-	display: flex;
-	justify-content: center;
+.cards-remaining {
+	grid-column: 1 / span 2;
 }
 
 .other-players {
-	margin-right: 35px;
+	grid-column: 1;
+	grid-row: 2;
+}
+
+.latest-img {
+	grid-column: 2;
+	grid-row: 2;
+	display: grid;
+	grid-template-columns: auto;
+	grid-template-rows: auto 15%;
+	border: pink;
+	justify-items: center;
+	align-items: center;
 }
 
 h3 {

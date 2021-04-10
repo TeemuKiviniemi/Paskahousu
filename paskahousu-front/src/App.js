@@ -7,49 +7,31 @@ import { io } from "socket.io-client";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { checkValidMove } from "./utils/utils";
 import axios from "axios";
+import { useDispatch, useSelector } from "react-redux";
+import { updateState, updateStack, updateLatest, updateCardAmount } from "./reducers/gameReducer";
 
 const socket = io("http://localhost:4000");
 
 function App() {
 	const [deckId, setDeckId] = useState("2r1mqhamqo49");
 	const [deck, setDeck] = useState([]);
-	const [remaining, setRemaining] = useState(52);
-	const [latestCard, setLatestCard] = useState({
-		image: "https://deckofcardsapi.com/static/img/X2.png",
-		value: 0,
-		code: 0,
-	});
 	const [username, setUsername] = useState();
-	const [gameInfo, setGameInfo] = useState([]);
-	const [stack, setStack] = useState([]);
 	const [turn, setTurn] = useState(false);
 	const [selectedCards, setSelectedCards] = useState([]);
 	const [log, setLog] = useState([]);
 
+	const dispatch = useDispatch();
+	const gameState = useSelector((state) => state);
+
 	// Open connection to server to get data
 	useEffect(() => {
-		// send info about latest cards that has been played
-		socket.on("latest", (card) => {
-			setLatestCard(card);
-		});
-
-		// get num of remaining cards in pack
-		socket.on("remaining", (responce) => {
-			setRemaining(responce);
-		});
-
-		// get players from servers
-		socket.on("players", (player) => {
-			setGameInfo(player);
-		});
-
-		// get stack of cards that have been played
-		socket.on("stack", (cards) => {
-			setStack(cards);
-		});
-
 		socket.on("turn", (turn) => {
 			setTurn(turn);
+		});
+
+		socket.on("updateGame", (newState) => {
+			console.log("GOT NEW STATE", newState);
+			dispatch(updateState(newState));
 		});
 
 		// If start is true -> loads new deck when joining to game.
@@ -72,11 +54,7 @@ function App() {
 	}, []);
 
 	const joinGame = () => {
-		socket.emit("join_game", username);
-	};
-
-	const handleUsernameChange = (e) => {
-		setUsername(e.target.value);
+		socket.emit("join_game", { username: username, gameState: gameState });
 	};
 
 	// load new deck at the start of the game
@@ -86,12 +64,12 @@ function App() {
 
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
-		socket.emit("cards", deck.length + stack.length);
-		setDeck([...deck, ...stack]);
-		setLatestCard({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
-		socket.emit("stack", "empty");
-		socket.emit("latest", { image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
+		socket.emit("cards", deck.length + gameState.stack.length);
+		setDeck([...deck, ...gameState.stack]);
+		dispatch(updateStack([]));
+		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 		changeTurn();
+		socket.emit("updateGame", gameState);
 	};
 
 	const changeTurn = () => {
@@ -100,7 +78,8 @@ function App() {
 
 	const drawRandomCard = async () => {
 		const newCard = await fetchCard(1);
-		console.log(newCard);
+		dispatch(updateCardAmount(deck.length + 1, username));
+		socket.emit("updateGame", gameState);
 		setDeck([...deck, newCard[0]]);
 	};
 
@@ -125,70 +104,75 @@ function App() {
 
 	// fetch new card, update players deck and send num of remaining to server
 	const fetchCard = async (amount) => {
-		const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${amount}`);
-		socket.emit("remaining", newCards.data.remaining);
-		return newCards.data.cards;
+		try {
+			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${amount}`);
+			return newCards.data.cards;
+		} catch (error) {
+			console.log("ERROR!", error);
+			return [];
+		}
 	};
 
 	// Sets latest card and send it to other players
 	// Loads new card from API if remaining > deck.length
 	// Sets new cards to players deck
-	const handleDeck = async (num) => {
+	const handleDeck = async () => {
 		const latest = {
 			image: selectedCards[0].image,
 			value: selectedCards[0].value,
 			code: selectedCards[0].code,
 		};
+		dispatch(updateLatest(latest));
 
-		socket.emit("latest", latest);
-
-		if (deck.length > 3 || remaining === 0) {
+		if (deck.length > 3 || gameState.remaining === 0) {
 			if (deck.length - selectedCards.length < 3) {
 				const amountToFetch = 3 - (deck.length - selectedCards.length);
 				const newCards = await fetchCard(amountToFetch);
 				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
-				socket.emit("cards", deck.length - amountToFetch);
+				dispatch(updateCardAmount(deck.length - amountToFetch, username));
 				setDeck([...newDeck, ...newCards]);
 			} else {
-				socket.emit("cards", deck.length - selectedCards.length);
+				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
 				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
 			}
-		} else if (remaining > 0) {
+		} else if (gameState.remaining > 0) {
 			const newCards = await fetchCard(selectedCards.length);
 			const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
-			socket.emit("cards", newCards.length + newDeck.length);
+			dispatch(updateCardAmount(newCards.length + newDeck.length, username));
 			setDeck([...newCards, ...newDeck]);
 		}
-		socket.emit("stack", selectedCards);
+
+		dispatch(updateStack(selectedCards));
 		setSelectedCards([]);
 	};
 
 	// Checks if players move is valid and changes turn / loads new cards after that.
 	const gameLogic = (num) => {
 		if (turn === true && selectedCards.length > 0) {
-			const validMove = checkValidMove(selectedCards[0].value, latestCard.value);
+			const validMove = checkValidMove(selectedCards[0].value, gameState.latestCard.value);
 
 			if (validMove === "ok" && selectedCards.length === 4) {
-				handleDeck(num);
-				socket.emit("stack", "empty");
-				socket.emit("latest", { image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
+				handleDeck();
+				dispatch(updateStack([], username));
+				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 				socket.emit("log", `Kaatuu! ${username} pelasi: ${selectedCards[0].code}`);
 			} else if (validMove === "ok") {
-				handleDeck(num);
+				handleDeck();
 				socket.emit("log", `${username} pelasi ${selectedCards.length} kpl ${selectedCards[0].code}`);
 				changeTurn();
 			} else if (validMove === "kaatuu") {
-				handleDeck(num);
+				handleDeck();
 				socket.emit("log", `Kaatuu! ${username} pelasi ${selectedCards[0].code}`);
-				socket.emit("stack", "empty");
-				socket.emit("latest", { image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 });
+				dispatch(updateStack([], username));
+				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 			} else if (validMove === "jatka") {
-				handleDeck(num);
+				handleDeck();
 				socket.emit("log", `${username} pelasi ${selectedCards[0].code}`);
 			} else if (validMove === "not ok") {
 				setSelectedCards([]);
 				alert("You cant play this card!");
 			}
+			socket.emit("updateGame", gameState);
 		} else {
 			alert("ei oo sun vuoro");
 		}
@@ -196,13 +180,13 @@ function App() {
 
 	return (
 		<Router>
-			<div className={`App ${remaining <= 5 ? "red" : null}`}>
+			<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
 				<Route path="/" exact>
-					<JoinToGame joinGame={joinGame} handleUsernameChange={handleUsernameChange} />
+					<JoinToGame joinGame={joinGame} setUsername={setUsername} />
 				</Route>
 
 				<Route path="/game">
-					<GameInfo remaining={remaining} gameInfo={gameInfo} latestCard={latestCard} raiseCardStack={raiseCardStack} />
+					<GameInfo raiseCardStack={raiseCardStack} />
 					<Player
 						turn={turn}
 						gameLogic={gameLogic}
