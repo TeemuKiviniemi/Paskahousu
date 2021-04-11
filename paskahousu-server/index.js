@@ -3,24 +3,31 @@ const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
 let players = [];
-let cardsInStack = [];
-let turn = 0;
+let turn = [];
 let log = [];
 
 io.on("connection", (socket) => {
 	socket.on("join_game", (data) => {
 		let username = data.username;
 		let state = data.gameState;
-		console.log("STATE", state);
+		// console.log("STATE", state);
 
-		if (username !== null) {
+		if (username !== null && state.room !== null) {
+			socket.join(state.room);
+
 			const user = {
 				id: socket.id,
 				username,
 				cards: 3,
 				turnNum: undefined,
+				room: state.room,
 			};
-			user.turnNum = players.length;
+
+			turn.push({ room: state.room, turn: 0 });
+			const playersInRoom = players.filter((player) => player.room === state.room);
+			user.turnNum = playersInRoom.length;
+			state.players = [...playersInRoom, user];
+			players.push(user);
 
 			io.emit("players", players);
 			if (user.turnNum === 0) {
@@ -30,21 +37,24 @@ io.on("connection", (socket) => {
 				io.to(socket.id).emit("turn", false);
 				io.to(socket.id).emit("onStart", false);
 			}
-			log.unshift(`${username} liittyi peliin`);
-			players.push(user);
-			io.emit("players", players);
-			io.emit("log", log);
-			console.log(user);
 
-			state.players = players;
-			io.emit("updateGame", state);
+			io.to(state.room).emit("players", players);
+			io.to(state.room).emit("log", `${username} liittyi peliin`);
+			// console.log(user);
+
+			io.to(state.room).emit("updateGame", state);
 		}
 	});
 
-	socket.on("turn", (next) => {
-		turn === players.length - 1 ? (turn = 0) : (turn += 1);
-		players.map((player) => {
-			if (player.turnNum === turn) {
+	socket.on("turn", (data) => {
+		roomIndex = turn.findIndex((i) => i.room === data.room);
+		console.log(data);
+		turn[roomIndex].turn === data.playerAmount - 1 ? (turn[roomIndex].turn = 0) : (turn[roomIndex].turn += 1);
+
+		playersInRoom = players.filter((p) => p.room === data.room);
+		console.log(playersInRoom);
+		playersInRoom.forEach((player) => {
+			if (player.turnNum === turn[roomIndex].turn) {
 				io.to(player.id).emit("turn", true);
 			} else {
 				io.to(player.id).emit("turn", false);
@@ -52,24 +62,21 @@ io.on("connection", (socket) => {
 		});
 	});
 
-	socket.on("log", (item) => {
-		log.unshift(item);
-		io.emit("log", log);
+	socket.on("log", (data) => {
+		io.to(data.room).emit("log", data.text);
 	});
 
 	socket.on("updateGame", (gameState) => {
-		console.log("UPDATE", gameState);
-		io.emit("updateGame", gameState);
+		// console.log("UPDATE", gameState);
+		io.to(gameState.room).emit("updateGame", gameState);
 	});
 
 	socket.on("disconnect", () => {
 		players = players.filter((u) => u.id !== socket.id);
-		socket.emit("players", players);
-		console.log(players);
+		// console.log(players);
 
 		if (players.length === 0) {
-			cardsInStack = [];
-			turn = 0;
+			turn = [];
 			log = [];
 		}
 	});
