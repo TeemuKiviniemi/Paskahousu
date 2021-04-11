@@ -1,5 +1,5 @@
 const initialState = {
-	room: undefined,
+	room: null,
 	players: [],
 	remaining: 52,
 	latestCard: {
@@ -35,6 +35,11 @@ const gameReducer = (state = initialState, action) => {
 			});
 			return newState;
 		}
+		case "SET_ROOM": {
+			let newState = state;
+			newState.room = action.data;
+			return newState;
+		}
 		default:
 			return state;
 	}
@@ -62,11 +67,17 @@ export const updateLatest = (card) => {
 };
 
 export const updateCardAmount = (amount, username) => {
-	console.log(amount);
 	return {
 		type: "UPDATE_AMOUNT",
 		data: amount,
 		user: username,
+	};
+};
+
+export const setRoom = (roomName) => {
+	return {
+		type: "SET_ROOM",
+		data: roomName,
 	};
 };
 

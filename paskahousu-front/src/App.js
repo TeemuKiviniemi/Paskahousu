@@ -26,11 +26,11 @@ function App() {
 	// Open connection to server to get data
 	useEffect(() => {
 		socket.on("turn", (turn) => {
+			console.log("TURN", turn);
 			setTurn(turn);
 		});
 
 		socket.on("updateGame", (newState) => {
-			console.log("GOT NEW STATE", newState);
 			dispatch(updateState(newState));
 		});
 
@@ -49,11 +49,12 @@ function App() {
 
 		// Get events from the server
 		socket.on("log", (item) => {
-			setLog(item);
+			setLog([...log, item]);
 		});
 	}, []);
 
 	const joinGame = () => {
+		console.log(gameState.room);
 		socket.emit("join_game", { username: username, gameState: gameState });
 	};
 
@@ -73,7 +74,7 @@ function App() {
 	};
 
 	const changeTurn = () => {
-		socket.emit("turn", true);
+		socket.emit("turn", { room: gameState.room, playerAmount: gameState.players.length });
 	};
 
 	const drawRandomCard = async () => {
@@ -155,19 +156,22 @@ function App() {
 				handleDeck();
 				dispatch(updateStack([], username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
-				socket.emit("log", `Kaatuu! ${username} pelasi: ${selectedCards[0].code}`);
+				socket.emit("log", { text: `Kaatuu! ${username} pelasi: ${selectedCards[0].code}`, room: gameState.room });
 			} else if (validMove === "ok") {
 				handleDeck();
-				socket.emit("log", `${username} pelasi ${selectedCards.length} kpl ${selectedCards[0].code}`);
+				socket.emit("log", {
+					text: `${username} pelasi ${selectedCards.length} kpl ${selectedCards[0].code}`,
+					room: gameState.room,
+				});
 				changeTurn();
 			} else if (validMove === "kaatuu") {
 				handleDeck();
-				socket.emit("log", `Kaatuu! ${username} pelasi ${selectedCards[0].code}`);
+				socket.emit("log", { text: `Kaatuu! ${username} pelasi ${selectedCards[0].code}`, room: gameState.room });
 				dispatch(updateStack([], username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 			} else if (validMove === "jatka") {
 				handleDeck();
-				socket.emit("log", `${username} pelasi ${selectedCards[0].code}`);
+				socket.emit("log", { text: `${username} pelasi ${selectedCards[0].code}`, room: gameState.room });
 			} else if (validMove === "not ok") {
 				setSelectedCards([]);
 				alert("You cant play this card!");
@@ -182,7 +186,7 @@ function App() {
 		<Router>
 			<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
 				<Route path="/" exact>
-					<JoinToGame joinGame={joinGame} setUsername={setUsername} />
+					<JoinToGame joinGame={joinGame} setUsername={setUsername} username={username} />
 				</Route>
 
 				<Route path="/game">
