@@ -1,3 +1,4 @@
+const axios = require("axios");
 const app = require("express")();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http);
@@ -7,7 +8,7 @@ let turn = [];
 let log = [];
 
 io.on("connection", (socket) => {
-	socket.on("join_game", (data) => {
+	socket.on("join_game", async (data) => {
 		let username = data.username;
 		let state = data.gameState;
 		// console.log("STATE", state);
@@ -23,7 +24,6 @@ io.on("connection", (socket) => {
 				room: state.room,
 			};
 
-			turn.push({ room: state.room, turn: 0 });
 			const playersInRoom = players.filter((player) => player.room === state.room);
 			user.turnNum = playersInRoom.length;
 			state.players = [...playersInRoom, user];
@@ -31,11 +31,16 @@ io.on("connection", (socket) => {
 
 			io.emit("players", players);
 			if (user.turnNum === 0) {
+				const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
+				turn.push({ room: state.room, turn: 0, deckId: data.deck_id });
+				state.deckId = data.deck_id;
 				io.to(socket.id).emit("turn", true);
-				io.to(socket.id).emit("onStart", true);
+				io.to(socket.id).emit("onStart", { startGame: true, deckId: data.deck_id });
 			} else {
+				objIndex = turn.findIndex((i) => i.room === state.room);
+				state.deckId = turn[objIndex].deckId;
 				io.to(socket.id).emit("turn", false);
-				io.to(socket.id).emit("onStart", false);
+				io.to(socket.id).emit("onStart", { startGame: false, deckId: turn[objIndex].deckId });
 			}
 
 			io.to(state.room).emit("players", players);
@@ -52,7 +57,6 @@ io.on("connection", (socket) => {
 		turn[roomIndex].turn === data.playerAmount - 1 ? (turn[roomIndex].turn = 0) : (turn[roomIndex].turn += 1);
 
 		playersInRoom = players.filter((p) => p.room === data.room);
-		console.log(playersInRoom);
 		playersInRoom.forEach((player) => {
 			if (player.turnNum === turn[roomIndex].turn) {
 				io.to(player.id).emit("turn", true);
