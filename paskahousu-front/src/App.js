@@ -8,12 +8,12 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import { checkValidMove } from "./utils/utils";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { updateState, updateStack, updateLatest, updateCardAmount } from "./reducers/gameReducer";
+import { updateState, updateStack, updateLatest, updateCardAmount, setDeckId } from "./reducers/gameReducer";
 
 const socket = io("http://localhost:4000");
 
 function App() {
-	const [deckId, setDeckId] = useState("2r1mqhamqo49");
+	// const [deckId, setDeckId] = useState("2r1mqhamqo49");
 	const [deck, setDeck] = useState([]);
 	const [username, setUsername] = useState();
 	const [turn, setTurn] = useState(false);
@@ -36,12 +36,17 @@ function App() {
 
 		// If start is true -> loads new deck when joining to game.
 		// If false -> only loads cards to self when joining
-		socket.on("onStart", async (start) => {
-			if (start === true) {
-				suffleDeck();
+		socket.on("onStart", async (data) => {
+			console.log(data);
+			dispatch(setDeckId(data.deckId));
+
+			if (data.startGame === true) {
+				console.log("HERE");
 				const newCards = await fetchCard(3);
+				console.log(newCards);
 				setDeck(newCards);
 			} else {
+				console.log("HERE2");
 				const newCards = await fetchCard(3);
 				setDeck(newCards);
 			}
@@ -56,11 +61,6 @@ function App() {
 	const joinGame = () => {
 		console.log(gameState.room);
 		socket.emit("join_game", { username: username, gameState: gameState });
-	};
-
-	// load new deck at the start of the game
-	const suffleDeck = async () => {
-		await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/shuffle/`);
 	};
 
 	// Raise cards from stack to players deck
@@ -106,7 +106,7 @@ function App() {
 	// fetch new card, update players deck and send num of remaining to server
 	const fetchCard = async (amount) => {
 		try {
-			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${deckId}/draw/?count=${amount}`);
+			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
 			return newCards.data.cards;
 		} catch (error) {
 			console.log("ERROR!", error);
@@ -148,7 +148,7 @@ function App() {
 	};
 
 	// Checks if players move is valid and changes turn / loads new cards after that.
-	const gameLogic = (num) => {
+	const gameLogic = () => {
 		if (turn === true && selectedCards.length > 0) {
 			const validMove = checkValidMove(selectedCards[0].value, gameState.latestCard.value);
 

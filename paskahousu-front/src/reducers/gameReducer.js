@@ -1,5 +1,6 @@
 const initialState = {
 	room: null,
+	deckId: null,
 	players: [],
 	remaining: 52,
 	latestCard: {
@@ -40,6 +41,12 @@ const gameReducer = (state = initialState, action) => {
 			newState.room = action.data;
 			return newState;
 		}
+		case "SET_DECKID": {
+			let newState = state;
+			newState.deckId = action.data;
+			return newState;
+		}
+
 		default:
 			return state;
 	}
@@ -78,6 +85,13 @@ export const setRoom = (roomName) => {
 	return {
 		type: "SET_ROOM",
 		data: roomName,
+	};
+};
+
+export const setDeckId = (deckId) => {
+	return {
+		type: "SET_DECKID",
+		data: deckId,
 	};
 };
 
