@@ -1,8 +1,9 @@
 import OtherPlayers from "./OtherPlayers";
 import { useSelector } from "react-redux";
 
-const GameInfo = ({ remaining, gameInfo, raiseCardStack }) => {
+const GameInfo = ({ gameInfo, raiseCardStack }) => {
 	const latest = useSelector((state) => state.latestCard);
+	const remaining = useSelector((state) => state.remaining);
 
 	return (
 		<div className="info-container">

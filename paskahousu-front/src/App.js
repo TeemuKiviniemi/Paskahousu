@@ -8,7 +8,14 @@ import { BrowserRouter as Router, Route } from "react-router-dom";
 import { checkValidMove } from "./utils/utils";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import { updateState, updateStack, updateLatest, updateCardAmount, setDeckId } from "./reducers/gameReducer";
+import {
+	updateState,
+	updateStack,
+	updateLatest,
+	updateCardAmount,
+	setDeckId,
+	updateRemaining,
+} from "./reducers/gameReducer";
 
 const socket = io("http://localhost:4000");
 
@@ -25,7 +32,6 @@ function App() {
 	// Open connection to server to get data
 	useEffect(() => {
 		socket.on("turn", (turn) => {
-			console.log("TURN", turn);
 			setTurn(turn);
 		});
 
@@ -35,22 +41,20 @@ function App() {
 
 		// Loads 3 cards to hand when game starts and sets deckId
 		socket.on("onStart", async (data) => {
-			console.log(data);
 			dispatch(setDeckId(data.deckId));
 			const newCards = await fetchCard(3);
-			console.log(newCards);
 			setDeck(newCards);
 		});
 
 		// Get events from the server
 		socket.on("log", (item) => {
-			console.log(log);
-			setLog([...log, item]);
+			const logg = log;
+			logg.unshift(item);
+			setLog(logg);
 		});
 	}, []);
 
 	const joinGame = () => {
-		console.log(gameState.room);
 		socket.emit("join_game", { username: username, gameState: gameState });
 	};
 
@@ -98,6 +102,7 @@ function App() {
 	const fetchCard = async (amount) => {
 		try {
 			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
+			dispatch(updateRemaining(newCards.data.remaining));
 			return newCards.data.cards;
 		} catch (error) {
 			console.log("ERROR!", error);
@@ -122,7 +127,7 @@ function App() {
 				const newCards = await fetchCard(amountToFetch);
 				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 				dispatch(updateCardAmount(deck.length - amountToFetch, username));
-				setDeck([...newDeck, ...newCards]);
+				setDeck([...newDeck, ...newCards.cards]);
 			} else {
 				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
 				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));

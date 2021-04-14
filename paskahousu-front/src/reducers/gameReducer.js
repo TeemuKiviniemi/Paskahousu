@@ -19,7 +19,6 @@ const gameReducer = (state = initialState, action) => {
 		case "UPDATE_STACK": {
 			let newState = state;
 			action.data.length > 0 ? (newState.stack = [...action.data, ...state.stack]) : (newState.stack = []);
-			console.log("Stack", newState);
 			return newState;
 		}
 		case "UPDATE_LATEST": {
@@ -46,7 +45,11 @@ const gameReducer = (state = initialState, action) => {
 			newState.deckId = action.data;
 			return newState;
 		}
-
+		case "UPDATE_REMAINIG": {
+			let newState = state;
+			newState.remaining = action.data;
+			return newState;
+		}
 		default:
 			return state;
 	}
@@ -92,6 +95,13 @@ export const setDeckId = (deckId) => {
 	return {
 		type: "SET_DECKID",
 		data: deckId,
+	};
+};
+
+export const updateRemaining = (amount) => {
+	return {
+		type: "UPDATE_REMAINIG",
+		data: amount,
 	};
 };
 
