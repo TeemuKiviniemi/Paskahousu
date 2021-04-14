@@ -13,7 +13,6 @@ import { updateState, updateStack, updateLatest, updateCardAmount, setDeckId } f
 const socket = io("http://localhost:4000");
 
 function App() {
-	// const [deckId, setDeckId] = useState("2r1mqhamqo49");
 	const [deck, setDeck] = useState([]);
 	const [username, setUsername] = useState();
 	const [turn, setTurn] = useState(false);
@@ -34,26 +33,18 @@ function App() {
 			dispatch(updateState(newState));
 		});
 
-		// If start is true -> loads new deck when joining to game.
-		// If false -> only loads cards to self when joining
+		// Loads 3 cards to hand when game starts and sets deckId
 		socket.on("onStart", async (data) => {
 			console.log(data);
 			dispatch(setDeckId(data.deckId));
-
-			if (data.startGame === true) {
-				console.log("HERE");
-				const newCards = await fetchCard(3);
-				console.log(newCards);
-				setDeck(newCards);
-			} else {
-				console.log("HERE2");
-				const newCards = await fetchCard(3);
-				setDeck(newCards);
-			}
+			const newCards = await fetchCard(3);
+			console.log(newCards);
+			setDeck(newCards);
 		});
 
 		// Get events from the server
 		socket.on("log", (item) => {
+			console.log(log);
 			setLog([...log, item]);
 		});
 	}, []);
