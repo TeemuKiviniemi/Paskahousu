@@ -5,7 +5,6 @@ const io = require("socket.io")(http);
 
 let players = [];
 let turn = [];
-let log = [];
 
 io.on("connection", (socket) => {
 	socket.on("join_game", async (data) => {
@@ -35,12 +34,12 @@ io.on("connection", (socket) => {
 				turn.push({ room: state.room, turn: 0, deckId: data.deck_id });
 				state.deckId = data.deck_id;
 				io.to(socket.id).emit("turn", true);
-				io.to(socket.id).emit("onStart", { startGame: true, deckId: data.deck_id });
+				io.to(socket.id).emit("onStart", { deckId: data.deck_id });
 			} else {
 				objIndex = turn.findIndex((i) => i.room === state.room);
 				state.deckId = turn[objIndex].deckId;
 				io.to(socket.id).emit("turn", false);
-				io.to(socket.id).emit("onStart", { startGame: false, deckId: turn[objIndex].deckId });
+				io.to(socket.id).emit("onStart", { deckId: turn[objIndex].deckId });
 			}
 
 			io.to(state.room).emit("players", players);
@@ -71,7 +70,7 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("updateGame", (gameState) => {
-		// console.log("UPDATE", gameState);
+		console.log("UPDATE", gameState.stack);
 		io.to(gameState.room).emit("updateGame", gameState);
 	});
 
