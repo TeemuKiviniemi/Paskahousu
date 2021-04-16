@@ -28,7 +28,7 @@ const JoinButton = styled(Link)`
 	border-radius: 10px;
 	text-decoration: none;
 	background-color: #fcfaf0;
-	color: black;
+	color: ${(props) => props.theme.color};
 	transition: 0.2s ease;
 	&:hover {
 		color: #10b981;
@@ -37,6 +37,7 @@ const JoinButton = styled(Link)`
 `;
 
 const StyledP = styled.p`
+	color: ${(props) => props.theme.color};
 	border-bottom: 1px solid #b5b2b0;
 	padding: 2px 4px;
 	margin: 6px;
@@ -47,7 +48,7 @@ function JoinToGame({ joinGame, setUsername }) {
 
 	return (
 		<Container>
-			<h1 style={{ letterSpacing: "1px" }}>♦️♠️ Welcome to play Paskahousu ♥️♣️</h1>
+			<h1 style={{ letterSpacing: "1p" }}>♦️♠️ Welcome to play Paskahousu ♥️♣️</h1>
 			<InputFrame>
 				<StyledP>Set username and room</StyledP>
 				<input

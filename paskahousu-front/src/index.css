@@ -38,7 +38,7 @@ button {
 	flex-direction: column;
 	margin: 20px;
 }
-.card-img,
+
 .latest-img {
 	height: 150px;
 	width: auto;
@@ -48,15 +48,7 @@ button {
 	cursor: pointer;
 	transition: all 200ms;
 }
-.dim-card {
-	filter: brightness(0.85);
-}
-.card-scale {
-	transform: translateY(-6px);
-}
-.card-img:hover {
-	transform: translateY(-6px);
-}
+
 .latest-img:hover {
 	transform: scale(1.03);
 }
@@ -92,7 +84,7 @@ button {
 h3 {
 	display: flex;
 	width: 100%;
-	border-bottom: 1px solid gray;
+	border-bottom: 1px solid #808080;
 	margin-bottom: 0px;
 }
 h2 {
@@ -114,24 +106,4 @@ ul {
 
 .set-username {
 	margin: 5px;
-}
-
-.log-frame {
-	z-index: 0;
-	height: 150px;
-	width: 250px;
-	position: absolute;
-	overflow: scroll;
-	scroll-behavior: auto;
-	left: 0;
-	top: 10px;
-	padding-top: 15px;
-	padding-bottom: 15px;
-	color: rgb(60, 60, 60);
-	font-size: 14px;
-	-webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
-	mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
-}
-.li-log {
-	margin-left: 25px;
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import styled, { ThemeProvider } from "styled-components";
 import Player from "./components/Player";
 import GameInfo from "./components/GameInfo";
 import JoinToGame from "./components/JoinToGame";
@@ -60,8 +61,9 @@ function App() {
 
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
-		socket.emit("cards", deck.length + gameState.stack.length);
-		setDeck([...deck, ...gameState.stack]);
+		const newDeck = [...deck, ...gameState.stack];
+		console.log({ newDeck });
+		setDeck(newDeck);
 		dispatch(updateStack([]));
 		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 		changeTurn();
@@ -120,18 +122,25 @@ function App() {
 			code: selectedCards[0].code,
 		};
 		dispatch(updateLatest(latest));
+		dispatch(updateStack(selectedCards));
 
-		if (deck.length > 3 || gameState.remaining === 0) {
-			if (deck.length - selectedCards.length < 3) {
-				const amountToFetch = 3 - (deck.length - selectedCards.length);
+		if (deck.length > 3 && gameState.remaining === 0) {
+			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
+			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
+			//
+		} else if (deck.length > 3) {
+			const amountToFetch = gameState.remaining > 3 ? 3 - (deck.length - selectedCards.length) : gameState.remaining;
+			console.log({ amountToFetch });
+			if (amountToFetch <= 0) {
+				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
+				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
+			} else {
 				const newCards = await fetchCard(amountToFetch);
 				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 				dispatch(updateCardAmount(deck.length - amountToFetch, username));
 				setDeck([...newDeck, ...newCards.cards]);
-			} else {
-				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
-				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
 			}
+			//
 		} else if (gameState.remaining > 0) {
 			const newCards = await fetchCard(selectedCards.length);
 			const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
@@ -139,7 +148,6 @@ function App() {
 			setDeck([...newCards, ...newDeck]);
 		}
 
-		dispatch(updateStack(selectedCards));
 		setSelectedCards([]);
 	};
 
@@ -178,26 +186,32 @@ function App() {
 		}
 	};
 
+	const theme = {
+		color: "rgb(60, 60, 60)",
+	};
+
 	return (
 		<Router>
-			<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
-				<Route path="/" exact>
-					<JoinToGame joinGame={joinGame} setUsername={setUsername} username={username} />
-				</Route>
+			<ThemeProvider theme={theme}>
+				<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
+					<Route path="/" exact>
+						<JoinToGame joinGame={joinGame} setUsername={setUsername} username={username} />
+					</Route>
 
-				<Route path="/game">
-					<GameInfo raiseCardStack={raiseCardStack} />
-					<Player
-						turn={turn}
-						gameLogic={gameLogic}
-						deck={deck}
-						drawRandomCard={drawRandomCard}
-						selectCardsToPlay={selectCardsToPlay}
-						playCards={selectedCards}
-					/>
-					<Log log={log} />
-				</Route>
-			</div>
+					<Route path="/game">
+						<GameInfo raiseCardStack={raiseCardStack} />
+						<Player
+							turn={turn}
+							gameLogic={gameLogic}
+							deck={deck}
+							drawRandomCard={drawRandomCard}
+							selectCardsToPlay={selectCardsToPlay}
+							playCards={selectedCards}
+						/>
+						<Log log={log} room={gameState.room} />
+					</Route>
+				</div>
+			</ThemeProvider>
 		</Router>
 	);
 }
