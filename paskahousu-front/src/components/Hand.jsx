@@ -9,9 +9,9 @@ const Img = styled.img`
 	cursor: pointer;
 	transition: all 200ms;
 	filter: ${(props) => (!props.turn ? "brightness(0.85)" : null)};
-	transform: ${(props) => (props.scale ? "translateY(-6px)" : null)};
+	transform: ${(props) => (props.scale && props.turn ? "translateY(-6px)" : null)};
 	&:hover {
-		transform: translateY(-6px);
+		transform: ${(props) => (props.turn ? "translateY(-6px)" : null)};
 	}
 `;
 

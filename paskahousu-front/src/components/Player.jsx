@@ -12,8 +12,12 @@ function Player({ deck, gameLogic, turn, drawRandomCard, selectCardsToPlay, play
 	return (
 		<div className="player-frame">
 			<Hand turn={turn} selectCardsToPlay={selectCardsToPlay} deck={deck} playCards={playCards} />
-			<Button onClick={() => drawRandomCard(1)}>Random</Button>
-			<Button onClick={() => gameLogic()}> Play cards </Button>
+			<Button onClick={() => drawRandomCard(1)} disabled={!turn}>
+				Random
+			</Button>
+			<Button onClick={() => gameLogic()} disabled={!turn}>
+				Play cards
+			</Button>
 		</div>
 	);
 }

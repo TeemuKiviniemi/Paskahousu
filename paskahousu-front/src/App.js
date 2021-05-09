@@ -112,8 +112,7 @@ function App() {
 		}
 	};
 
-	// Sets latest card and send it to other players
-	// Loads new card from API if remaining > deck.length
+	// Updates latest card to gameState
 	// Sets new cards to players deck
 	const handleDeck = async () => {
 		const latest = {
@@ -138,14 +137,17 @@ function App() {
 				const newCards = await fetchCard(amountToFetch);
 				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 				dispatch(updateCardAmount(deck.length - amountToFetch, username));
-				setDeck([...newDeck, ...newCards.cards]);
+				setDeck([...newDeck, ...newCards]);
 			}
-			//
 		} else if (gameState.remaining > 0) {
 			const newCards = await fetchCard(selectedCards.length);
 			const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
 			dispatch(updateCardAmount(newCards.length + newDeck.length, username));
 			setDeck([...newCards, ...newDeck]);
+		} else if (gameState.remaining === 0) {
+			console.log("Here");
+			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
+			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
 		}
 
 		setSelectedCards([]);
@@ -182,7 +184,7 @@ function App() {
 			}
 			socket.emit("updateGame", gameState);
 		} else {
-			alert("ei oo sun vuoro");
+			alert("Not your turn");
 		}
 	};
 
