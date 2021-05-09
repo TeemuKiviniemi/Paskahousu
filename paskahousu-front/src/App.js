@@ -199,7 +199,7 @@ function App() {
 					</Route>
 
 					<Route path="/game">
-						<GameInfo raiseCardStack={raiseCardStack} />
+						<GameInfo raiseCardStack={raiseCardStack} turn={turn} />
 						<Player
 							turn={turn}
 							gameLogic={gameLogic}
