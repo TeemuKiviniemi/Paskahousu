@@ -4,13 +4,21 @@ import { useDispatch } from "react-redux";
 import { setRoom } from "../reducers/gameReducer";
 
 const Container = styled.div`
-	display: flex;
-	flex-direction: column;
+	height: 100vh;
+	width: 100vw;
+	display: grid;
+	grid-template-rows: 30% 40% 30%;
+	justify-items: center;
 	align-items: center;
+	border: 1px solid red;
+	/* flex-direction: column; */
+	/* align-items: center; */
 `;
 
 const InputFrame = styled.div`
+	grid-row-start: 2;
 	background-color: white;
+	height: min-content;
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -43,12 +51,18 @@ const StyledP = styled.p`
 	margin: 6px;
 `;
 
+const StyledH1 = styled.h1`
+	grid-row-start: 1;
+	align-self: flex-end;
+	letter-spacing: 1px;
+`;
+
 function JoinToGame({ joinGame, setUsername }) {
 	const dispatch = useDispatch();
 
 	return (
 		<Container>
-			<h1 style={{ letterSpacing: "1p" }}>♦️♠️ Welcome to play Paskahousu ♥️♣️</h1>
+			<StyledH1>♦️♠️ Welcome to play Paskahousu ♥️♣️</StyledH1>
 			<InputFrame>
 				<StyledP>Set username and room</StyledP>
 				<input
