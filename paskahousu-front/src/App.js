@@ -37,6 +37,7 @@ function App() {
 		});
 
 		socket.on("updateGame", (newState) => {
+			console.log("GOT NEW STATE", newState);
 			dispatch(updateState(newState));
 		});
 
@@ -84,6 +85,8 @@ function App() {
 	// Select multiple cards to play next
 	// These cards need to have same value
 	const selectCardsToPlay = (num) => {
+		if (!turn) return;
+
 		if (selectedCards.length > 0) {
 			if (selectedCards.indexOf(deck[num]) !== -1) {
 				const cards = selectedCards.filter((item) => item !== deck[num]);
@@ -102,14 +105,10 @@ function App() {
 
 	// fetch new card, update players deck and send num of remaining to server
 	const fetchCard = async (amount) => {
-		try {
-			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
-			dispatch(updateRemaining(newCards.data.remaining));
-			return newCards.data.cards;
-		} catch (error) {
-			console.log("ERROR!", error);
-			return [];
-		}
+		dispatch(updateRemaining(gameState.remaining - amount));
+		const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
+		console.log("NEW REMAINING", newCards.data.remaining);
+		return newCards.data.cards;
 	};
 
 	// Updates latest card to gameState
@@ -129,7 +128,6 @@ function App() {
 			//
 		} else if (deck.length > 3) {
 			const amountToFetch = gameState.remaining > 3 ? 3 - (deck.length - selectedCards.length) : gameState.remaining;
-			console.log({ amountToFetch });
 			if (amountToFetch <= 0) {
 				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
 				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
@@ -145,7 +143,6 @@ function App() {
 			dispatch(updateCardAmount(newCards.length + newDeck.length, username));
 			setDeck([...newCards, ...newDeck]);
 		} else if (gameState.remaining === 0) {
-			console.log("Here");
 			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
 			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
 		}
@@ -182,6 +179,7 @@ function App() {
 				setSelectedCards([]);
 				alert("You cant play this card!");
 			}
+			console.log("SEND STATE", gameState);
 			socket.emit("updateGame", gameState);
 		} else {
 			alert("Not your turn");

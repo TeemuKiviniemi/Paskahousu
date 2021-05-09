@@ -48,6 +48,7 @@ const gameReducer = (state = initialState, action) => {
 		case "UPDATE_REMAINIG": {
 			let newState = state;
 			newState.remaining = action.data;
+			console.log("update remaining", newState.remaining);
 			return newState;
 		}
 		default:

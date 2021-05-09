@@ -13,7 +13,7 @@ export const returnInt = (text) => {
 	}
 };
 
-// Checks if players card can be played
+// Checks if card can be played
 export const checkValidMove = (nextCard, latestCard) => {
 	latestCard = returnInt(latestCard);
 	nextCard = returnInt(nextCard);
@@ -30,8 +30,8 @@ export const checkValidMove = (nextCard, latestCard) => {
 		return "kaatuu";
 	} else if (nextCard === 10 && latestCard <= 9) {
 		return "kaatuu";
-	} else if (nextCard >= 11 && latestCard >= 7) {
-		return "ok";
+	} else if (nextCard >= 11 && latestCard < 7) {
+		return "not ok";
 	} else if (nextCard >= latestCard) {
 		return "ok";
 	} else {
