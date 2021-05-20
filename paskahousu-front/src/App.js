@@ -63,7 +63,7 @@ function App() {
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
 		const newDeck = [...deck, ...gameState.stack];
-		console.log({ newDeck });
+		dispatch(updateCardAmount(newDeck.length, username));
 		setDeck(newDeck);
 		dispatch(updateStack([]));
 		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
