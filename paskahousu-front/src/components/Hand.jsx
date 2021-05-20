@@ -1,3 +1,4 @@
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 
 const Img = styled.img`
@@ -16,6 +17,8 @@ const Img = styled.img`
 `;
 
 function Hand({ deck, selectCardsToPlay, turn, playCards }) {
+	const selectedCards = useSelector((state) => state.player.selectedCards);
+
 	return (
 		<div className="deck">
 			{deck.map((card, id) => {
@@ -23,7 +26,7 @@ function Hand({ deck, selectCardsToPlay, turn, playCards }) {
 					<Img
 						key={id}
 						turn={turn}
-						scale={playCards.indexOf(card) !== -1 ? "card-scale" : null}
+						scale={selectedCards.indexOf(card) !== -1 ? "card-scale" : null}
 						src={card.image}
 						alt=""
 						onClick={() => selectCardsToPlay(id)}

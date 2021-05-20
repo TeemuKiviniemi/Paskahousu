@@ -2,6 +2,7 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setRoom } from "../reducers/gameReducer";
+import { setUsername } from "../reducers/playerReducer";
 
 const Container = styled.div`
 	height: 100vh;
@@ -53,7 +54,7 @@ const StyledH1 = styled.h1`
 	letter-spacing: 1px;
 `;
 
-function JoinToGame({ joinGame, setUsername }) {
+function JoinToGame({ joinGame }) {
 	const dispatch = useDispatch();
 
 	return (
@@ -65,7 +66,7 @@ function JoinToGame({ joinGame, setUsername }) {
 					className="set-username"
 					type="text"
 					placeholder="Username"
-					onChange={(e) => setUsername(e.target.value)}
+					onChange={(e) => dispatch(setUsername(e.target.value))}
 				/>
 				<input type="text" placeholder="Room" onChange={(e) => dispatch(setRoom(e.target.value))} />
 				<JoinButton to="/game" onClick={joinGame}>

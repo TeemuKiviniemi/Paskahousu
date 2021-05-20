@@ -12,7 +12,7 @@ const initialState = {
 };
 
 const gameReducer = (state = initialState, action) => {
-	// console.log("ACTION", action.type, action.data);
+	console.log("ACTION", action.type, action.data);
 	switch (action.type) {
 		case "UPDATE_STATE":
 			return action.data;

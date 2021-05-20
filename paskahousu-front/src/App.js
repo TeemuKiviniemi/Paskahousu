@@ -17,23 +17,25 @@ import {
 	setDeckId,
 	updateRemaining,
 } from "./reducers/gameReducer";
+import { setTurn, setSelectedCards } from "./reducers/playerReducer";
 
 const socket = io("http://localhost:4000");
 
 function App() {
 	const [deck, setDeck] = useState([]);
-	const [username, setUsername] = useState();
-	const [turn, setTurn] = useState(false);
-	const [selectedCards, setSelectedCards] = useState([]);
+	// const [username, setUsername] = useState();
+	// const [turn, setTurn] = useState(false);
+	// const [selectedCards, setSelectedCards] = useState([]);
 	const [log, setLog] = useState([]);
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
+	const playerState = useSelector((state) => state.player);
 
 	// Open connection to server to get data
 	useEffect(() => {
 		socket.on("turn", (turn) => {
-			setTurn(turn);
+			dispatch(setTurn(turn));
 		});
 
 		socket.on("updateGame", (newState) => {
@@ -56,13 +58,13 @@ function App() {
 	}, []);
 
 	const joinGame = () => {
-		socket.emit("join_game", { username: username, gameState: gameState });
+		socket.emit("join_game", { username: playerState.username, gameState: gameState });
 	};
 
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
 		const newDeck = [...deck, ...gameState.stack];
-		dispatch(updateCardAmount(newDeck.length, username));
+		dispatch(updateCardAmount(newDeck.length, playerState.username));
 		setDeck(newDeck);
 		dispatch(updateStack([]));
 		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
@@ -76,7 +78,7 @@ function App() {
 
 	const drawRandomCard = async () => {
 		const newCard = await fetchCard(1);
-		dispatch(updateCardAmount(deck.length + 1, username));
+		dispatch(updateCardAmount(deck.length + 1, playerState.username));
 		socket.emit("updateGame", gameState);
 		setDeck([...deck, newCard[0]]);
 	};
@@ -84,21 +86,14 @@ function App() {
 	// Select multiple cards to play next
 	// These cards need to have same value
 	const selectCardsToPlay = (num) => {
-		if (!turn) return;
+		if (!playerState.turn) return;
 
-		if (selectedCards.length > 0) {
-			if (selectedCards.indexOf(deck[num]) !== -1) {
-				const cards = selectedCards.filter((item) => item !== deck[num]);
-				setSelectedCards(cards);
-			} else if (selectedCards[selectedCards.length - 1].value === deck[num].value) {
-				const cards = [...selectedCards, deck[num]];
-				setSelectedCards(cards);
-			} else {
-				setSelectedCards([]);
-				alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
-			}
+		// if selected cards value is not same as previous, this will set selected cards to empty
+		if (playerState.selectedCards.length > 0 && playerState.selectedCards.indexOf(deck[num]) === -1) {
+			dispatch(setSelectedCards(null));
+			alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
 		} else {
-			setSelectedCards([deck[num]]);
+			dispatch(setSelectedCards(deck[num]));
 		}
 	};
 
@@ -113,67 +108,77 @@ function App() {
 	// Sets new cards to players deck
 	const handleDeck = async () => {
 		const latest = {
-			image: selectedCards[0].image,
-			value: selectedCards[0].value,
-			code: selectedCards[0].code,
+			image: playerState.selectedCards[0].image,
+			value: playerState.selectedCards[0].value,
+			code: playerState.selectedCards[0].code,
 		};
 		dispatch(updateLatest(latest));
-		dispatch(updateStack(selectedCards));
+		dispatch(updateStack(playerState.selectedCards));
 
 		if (deck.length > 3 && gameState.remaining === 0) {
-			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
-			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
+			dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
+			setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
 		} else if (deck.length > 3) {
-			const amountToFetch = gameState.remaining > 3 ? 3 - (deck.length - selectedCards.length) : gameState.remaining;
+			const amountToFetch =
+				gameState.remaining > 3 ? 3 - (deck.length - playerState.selectedCards.length) : gameState.remaining;
 			if (amountToFetch <= 0) {
-				dispatch(updateCardAmount(deck.length - selectedCards.length, username));
-				setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
+				dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
+				setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
 			} else {
 				const newCards = await fetchCard(amountToFetch);
-				const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
-				dispatch(updateCardAmount(deck.length - amountToFetch, username));
+				const newDeck = deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
+				dispatch(updateCardAmount(deck.length - amountToFetch, playerState.username));
 				setDeck([...newDeck, ...newCards]);
 			}
 		} else if (gameState.remaining > 0) {
-			const newCards = await fetchCard(selectedCards.length);
-			const newDeck = deck.filter((card) => selectedCards.indexOf(card) === -1);
-			dispatch(updateCardAmount(newCards.length + newDeck.length, username));
+			const newCards = await fetchCard(playerState.selectedCards.length);
+			const newDeck = deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
+			dispatch(updateCardAmount(newCards.length + newDeck.length, playerState.username));
 			setDeck([...newCards, ...newDeck]);
 		} else if (gameState.remaining === 0) {
-			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
-			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
+			dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
+			setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
 		}
 
-		setSelectedCards([]);
+		dispatch(setSelectedCards(null));
 	};
 
 	// Checks if players move is valid and changes turn / loads new cards after that.
 	const gameLogic = () => {
-		if (turn === true && selectedCards.length > 0) {
-			const validMove = checkValidMove(selectedCards[0].value, gameState.latestCard.value);
+		if (playerState.turn === true && playerState.selectedCards.length > 0) {
+			const validMove = checkValidMove(playerState.selectedCards[0].value, gameState.latestCard.value);
 
-			if (validMove === "ok" && selectedCards.length === 4) {
+			if (validMove === "ok" && playerState.selectedCards.length === 4) {
 				handleDeck();
-				dispatch(updateStack([], username));
+				dispatch(updateStack([], playerState.username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
-				socket.emit("log", { text: `Kaatuu! ${username} pelasi: ${selectedCards[0].code}`, room: gameState.room });
+				socket.emit("log", {
+					text: `Kaatuu! ${playerState.username} pelasi: ${playerState.selectedCards[0].code}`,
+					room: gameState.room,
+				});
 			} else if (validMove === "ok") {
 				handleDeck();
 				socket.emit("log", {
-					text: `${username} pelasi ${selectedCards.length} kpl ${selectedCards[0].code}`,
+					text: `${playerState.username} pelasi ${playerState.selectedCards.length} kpl ${playerState.selectedCards[0].code}`,
 					room: gameState.room,
 				});
 				changeTurn();
 			} else if (validMove === "kaatuu") {
 				handleDeck();
-				socket.emit("log", { text: `Kaatuu! ${username} pelasi ${selectedCards[0].code}`, room: gameState.room });
-				dispatch(updateStack([], username));
+				socket.emit("log", {
+					text: `Kaatuu! ${playerState.username} pelasi ${playerState.selectedCards[0].code}`,
+					room: gameState.room,
+				});
+				dispatch(updateStack([], playerState.username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 			} else if (validMove === "jatka") {
 				handleDeck();
-				socket.emit("log", { text: `${username} pelasi ${selectedCards[0].code}`, room: gameState.room });
+				socket.emit("log", {
+					text: `${playerState.username} pelasi ${playerState.selectedCards[0].code}`,
+					room: gameState.room,
+				});
 			} else if (validMove === "not ok") {
-				setSelectedCards([]);
+				dispatch(setSelectedCards(null));
 				alert("You cant play this card!");
 			}
 
@@ -192,18 +197,17 @@ function App() {
 			<ThemeProvider theme={theme}>
 				<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
 					<Route path="/" exact>
-						<JoinToGame joinGame={joinGame} setUsername={setUsername} username={username} />
+						<JoinToGame joinGame={joinGame} />
 					</Route>
 
 					<Route path="/game">
-						<GameInfo raiseCardStack={raiseCardStack} turn={turn} />
+						<GameInfo raiseCardStack={raiseCardStack} turn={playerState.turn} />
 						<Player
-							turn={turn}
+							turn={playerState.turn}
 							gameLogic={gameLogic}
 							deck={deck}
 							drawRandomCard={drawRandomCard}
 							selectCardsToPlay={selectCardsToPlay}
-							playCards={selectedCards}
 						/>
 						<Log log={log} room={gameState.room} />
 					</Route>
