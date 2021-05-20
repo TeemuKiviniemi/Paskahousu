@@ -28,7 +28,7 @@ function App() {
 	const [log, setLog] = useState([]);
 
 	const dispatch = useDispatch();
-	const gameState = useSelector((state) => state);
+	const gameState = useSelector((state) => state.game);
 
 	// Open connection to server to get data
 	useEffect(() => {
@@ -37,7 +37,6 @@ function App() {
 		});
 
 		socket.on("updateGame", (newState) => {
-			console.log("GOT NEW STATE", newState);
 			dispatch(updateState(newState));
 		});
 
@@ -107,7 +106,6 @@ function App() {
 	const fetchCard = async (amount) => {
 		dispatch(updateRemaining(gameState.remaining - amount));
 		const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
-		console.log("NEW REMAINING", newCards.data.remaining);
 		return newCards.data.cards;
 	};
 
@@ -125,7 +123,6 @@ function App() {
 		if (deck.length > 3 && gameState.remaining === 0) {
 			dispatch(updateCardAmount(deck.length - selectedCards.length, username));
 			setDeck(deck.filter((card) => selectedCards.indexOf(card) === -1));
-			//
 		} else if (deck.length > 3) {
 			const amountToFetch = gameState.remaining > 3 ? 3 - (deck.length - selectedCards.length) : gameState.remaining;
 			if (amountToFetch <= 0) {
@@ -179,7 +176,7 @@ function App() {
 				setSelectedCards([]);
 				alert("You cant play this card!");
 			}
-			console.log("SEND STATE", gameState);
+
 			socket.emit("updateGame", gameState);
 		} else {
 			alert("Not your turn");

@@ -2,7 +2,7 @@ import { CgCardDiamonds } from "react-icons/cg";
 import { useSelector } from "react-redux";
 
 function OtherPlayers() {
-	const otherPlayers = useSelector((state) => state.players);
+	const otherPlayers = useSelector((state) => state.game.players);
 
 	return (
 		<div className="other-players">

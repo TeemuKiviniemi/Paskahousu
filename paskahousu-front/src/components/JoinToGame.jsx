@@ -10,9 +10,6 @@ const Container = styled.div`
 	grid-template-rows: 30% 40% 30%;
 	justify-items: center;
 	align-items: center;
-	border: 1px solid red;
-	/* flex-direction: column; */
-	/* align-items: center; */
 `;
 
 const InputFrame = styled.div`
@@ -33,14 +30,13 @@ const JoinButton = styled(Link)`
 	margin-top: 15px;
 	padding: 6px 15px;
 	border: 1px solid darkgray;
-	border-radius: 10px;
+	border-radius: 4px;
 	text-decoration: none;
 	background-color: #fcfaf0;
 	color: ${(props) => props.theme.color};
 	transition: 0.2s ease;
 	&:hover {
-		color: #10b981;
-		background-color: #fcf9e9;
+		background-color: #d3d3d3;
 	}
 `;
 

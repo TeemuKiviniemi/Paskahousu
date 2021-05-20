@@ -16,20 +16,15 @@ const LatestImg = styled.img`
 `;
 
 const GameInfo = ({ raiseCardStack, turn }) => {
-	const latest = useSelector((state) => state.latestCard);
-	const remaining = useSelector((state) => state.remaining);
+	const latest = useSelector((state) => state.game.latestCard);
+	const remaining = useSelector((state) => state.game.remaining);
 
 	return (
 		<div className="info-container">
 			<h2 className="cards-remaining">Cards remaining: {remaining}</h2>
 			<OtherPlayers />
-			<LatestImg
-				// className="latest-img"
-				src={latest.image}
-				turn={turn}
-				alt=""
-				onClick={() => (turn ? raiseCardStack() : null)}
-			/>
+
+			<LatestImg src={latest.image} turn={turn} alt="" onClick={() => (turn ? raiseCardStack() : null)} />
 		</div>
 	);
 };
