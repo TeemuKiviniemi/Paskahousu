@@ -13,21 +13,6 @@ button {
 	margin: 1px;
 	width: 100px;
 }
-.App {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	flex-direction: column;
-	color: rgb(37, 37, 37);
-	min-height: 100vh;
-	min-width: 100vw;
-	background-color: #fcfaf0;
-	transition: background-color 800ms;
-}
-.red {
-	background: rgb(104, 0, 0);
-	color: white;
-}
 
 .player-frame {
 	display: flex;

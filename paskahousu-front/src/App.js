@@ -4,6 +4,8 @@ import Player from "./components/Player";
 import GameInfo from "./components/GameInfo";
 import JoinToGame from "./components/JoinToGame";
 import Log from "./components/Log";
+import LightSwitch from "./components/LightSwicht";
+import { lightTheme, darkTheme } from "./Theme";
 import { io } from "socket.io-client";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import { checkValidMove } from "./utils/utils";
@@ -21,7 +23,20 @@ import { setTurn, setSelectedCards } from "./reducers/playerReducer";
 
 const socket = io("http://localhost:4000");
 
+const AppFrame = styled.div`
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-direction: column;
+	min-height: 100vh;
+	min-width: 100vw;
+	background-color: ${(props) => props.theme.backgroundColor};
+	color: ${(props) => props.theme.color};
+	transition: all 500ms;
+`;
+
 function App() {
+	const [theme, setTheme] = useState(true);
 	const [deck, setDeck] = useState([]);
 	// const [username, setUsername] = useState();
 	// const [turn, setTurn] = useState(false);
@@ -89,7 +104,7 @@ function App() {
 		if (!playerState.turn) return;
 
 		// if selected cards value is not same as previous, this will set selected cards to empty
-		if (playerState.selectedCards.length > 0 && playerState.selectedCards.indexOf(deck[num]) === -1) {
+		if (playerState.selectedCards.length > 0 && playerState.selectedCards[0].value !== deck[num].value) {
 			dispatch(setSelectedCards(null));
 			alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
 		} else {
@@ -188,14 +203,10 @@ function App() {
 		}
 	};
 
-	const theme = {
-		color: "rgb(60, 60, 60)",
-	};
-
 	return (
 		<Router>
-			<ThemeProvider theme={theme}>
-				<div className={`App ${gameState.remaining <= 5 ? "red" : null}`}>
+			<ThemeProvider theme={theme ? lightTheme : darkTheme}>
+				<AppFrame>
 					<Route path="/" exact>
 						<JoinToGame joinGame={joinGame} />
 					</Route>
@@ -210,8 +221,9 @@ function App() {
 							selectCardsToPlay={selectCardsToPlay}
 						/>
 						<Log log={log} room={gameState.room} />
+						<LightSwitch theme={theme} setTheme={setTheme} />
 					</Route>
-				</div>
+				</AppFrame>
 			</ThemeProvider>
 		</Router>
 	);

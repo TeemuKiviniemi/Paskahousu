@@ -4,7 +4,6 @@ import styled from "styled-components";
 const PlayerFrame = styled.div``;
 
 const Button = styled.button`
-	color: ${(props) => props.theme.color};
 	padding: 6px 10px;
 `;
 

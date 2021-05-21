@@ -34,7 +34,7 @@ const JoinButton = styled(Link)`
 	border-radius: 4px;
 	text-decoration: none;
 	background-color: #fcfaf0;
-	color: ${(props) => props.theme.color};
+	color: rgb(60, 60, 60);
 	transition: 0.2s ease;
 	&:hover {
 		background-color: #d3d3d3;
@@ -42,7 +42,7 @@ const JoinButton = styled(Link)`
 `;
 
 const StyledP = styled.p`
-	color: ${(props) => props.theme.color};
+	color: rgb(60, 60, 60);
 	border-bottom: 1px solid #b5b2b0;
 	padding: 2px 4px;
 	margin: 6px;

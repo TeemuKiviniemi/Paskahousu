@@ -14,7 +14,6 @@ const LogContainer = styled.div`
 const StyledH4 = styled.h4`
 	margin-bottom: 4px;
 	padding: 0;
-	color: ${(props) => props.theme.color};
 `;
 
 const List = styled.ul`
