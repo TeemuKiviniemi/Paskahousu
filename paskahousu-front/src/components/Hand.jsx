@@ -16,17 +16,17 @@ const Img = styled.img`
 	}
 `;
 
-function Hand({ deck, selectCardsToPlay, turn, playCards }) {
-	const selectedCards = useSelector((state) => state.player.selectedCards);
+function Hand({ selectCardsToPlay }) {
+	const player = useSelector((state) => state.player);
 
 	return (
 		<div className="deck">
-			{deck.map((card, id) => {
+			{player.deck.map((card, id) => {
 				return (
 					<Img
 						key={id}
-						turn={turn}
-						scale={selectedCards.indexOf(card) !== -1 ? "card-scale" : null}
+						turn={player.turn}
+						scale={player.selectedCards.indexOf(card) !== -1 ? "card-scale" : null}
 						src={card.image}
 						alt=""
 						onClick={() => selectCardsToPlay(id)}
