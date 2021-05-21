@@ -19,7 +19,7 @@ import {
 	setDeckId,
 	updateRemaining,
 } from "./reducers/gameReducer";
-import { setTurn, setSelectedCards } from "./reducers/playerReducer";
+import { setTurn, setSelectedCards, setDeck } from "./reducers/playerReducer";
 
 const socket = io("http://localhost:4000");
 
@@ -28,8 +28,8 @@ const AppFrame = styled.div`
 	align-items: center;
 	justify-content: center;
 	flex-direction: column;
+	gap: 25px;
 	min-height: 100vh;
-	min-width: 100vw;
 	background-color: ${(props) => props.theme.backgroundColor};
 	color: ${(props) => props.theme.color};
 	transition: all 500ms;
@@ -37,10 +37,6 @@ const AppFrame = styled.div`
 
 function App() {
 	const [theme, setTheme] = useState(true);
-	const [deck, setDeck] = useState([]);
-	// const [username, setUsername] = useState();
-	// const [turn, setTurn] = useState(false);
-	// const [selectedCards, setSelectedCards] = useState([]);
 	const [log, setLog] = useState([]);
 
 	const dispatch = useDispatch();
@@ -61,7 +57,7 @@ function App() {
 		socket.on("onStart", async (data) => {
 			dispatch(setDeckId(data.deckId));
 			const newCards = await fetchCard(3);
-			setDeck(newCards);
+			dispatch(setDeck(newCards));
 		});
 
 		// Get events from the server
@@ -78,9 +74,9 @@ function App() {
 
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
-		const newDeck = [...deck, ...gameState.stack];
+		const newDeck = [...playerState.deck, ...gameState.stack];
 		dispatch(updateCardAmount(newDeck.length, playerState.username));
-		setDeck(newDeck);
+		dispatch(setDeck(newDeck));
 		dispatch(updateStack([]));
 		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 		changeTurn();
@@ -93,9 +89,9 @@ function App() {
 
 	const drawRandomCard = async () => {
 		const newCard = await fetchCard(1);
-		dispatch(updateCardAmount(deck.length + 1, playerState.username));
+		dispatch(updateCardAmount(playerState.deck.length + 1, playerState.username));
 		socket.emit("updateGame", gameState);
-		setDeck([...deck, newCard[0]]);
+		dispatch(setDeck([...playerState.deck, newCard[0]]));
 	};
 
 	// Select multiple cards to play next
@@ -104,11 +100,11 @@ function App() {
 		if (!playerState.turn) return;
 
 		// if selected cards value is not same as previous, this will set selected cards to empty
-		if (playerState.selectedCards.length > 0 && playerState.selectedCards[0].value !== deck[num].value) {
+		if (playerState.selectedCards.length > 0 && playerState.selectedCards[0].value !== playerState.deck[num].value) {
 			dispatch(setSelectedCards(null));
 			alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
 		} else {
-			dispatch(setSelectedCards(deck[num]));
+			dispatch(setSelectedCards(playerState.deck[num]));
 		}
 	};
 
@@ -130,29 +126,31 @@ function App() {
 		dispatch(updateLatest(latest));
 		dispatch(updateStack(playerState.selectedCards));
 
-		if (deck.length > 3 && gameState.remaining === 0) {
-			dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
-			setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
-		} else if (deck.length > 3) {
+		if (playerState.deck.length > 3 && gameState.remaining === 0) {
+			dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
+			dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
+		} else if (playerState.deck.length > 3) {
 			const amountToFetch =
-				gameState.remaining > 3 ? 3 - (deck.length - playerState.selectedCards.length) : gameState.remaining;
+				gameState.remaining > 3
+					? 3 - (playerState.deck.length - playerState.selectedCards.length)
+					: gameState.remaining;
 			if (amountToFetch <= 0) {
-				dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
-				setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
+				dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
+				dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
 			} else {
 				const newCards = await fetchCard(amountToFetch);
-				const newDeck = deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
-				dispatch(updateCardAmount(deck.length - amountToFetch, playerState.username));
-				setDeck([...newDeck, ...newCards]);
+				const newDeck = playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
+				dispatch(updateCardAmount(playerState.deck.length - amountToFetch, playerState.username));
+				dispatch(setDeck([...newDeck, ...newCards]));
 			}
 		} else if (gameState.remaining > 0) {
 			const newCards = await fetchCard(playerState.selectedCards.length);
-			const newDeck = deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
+			const newDeck = playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
 			dispatch(updateCardAmount(newCards.length + newDeck.length, playerState.username));
-			setDeck([...newCards, ...newDeck]);
+			dispatch(setDeck([...newCards, ...newDeck]));
 		} else if (gameState.remaining === 0) {
-			dispatch(updateCardAmount(deck.length - playerState.selectedCards.length, playerState.username));
-			setDeck(deck.filter((card) => playerState.selectedCards.indexOf(card) === -1));
+			dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
+			dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
 		}
 
 		dispatch(setSelectedCards(null));
@@ -216,7 +214,7 @@ function App() {
 						<Player
 							turn={playerState.turn}
 							gameLogic={gameLogic}
-							deck={deck}
+							deck={playerState.deck}
 							drawRandomCard={drawRandomCard}
 							selectCardsToPlay={selectCardsToPlay}
 						/>

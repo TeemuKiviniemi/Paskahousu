@@ -11,16 +11,16 @@ const LightButton = styled.button`
 	border: transparent;
 	border-radius: 3px;
 	&:hover {
-		background-color: rgba(0, 0, 0, 0.1);
+		background-color: rgba(0, 0, 0, 0.15);
 	}
 `;
 
-const Test = styled(RiLightbulbLine)`
+const LightbulbLine = styled(RiLightbulbLine)`
 	color: lightgray;
 `;
 
 const LightSwitch = ({ theme, setTheme }) => {
-	return <LightButton onClick={() => setTheme(!theme)}>{theme ? <RiLightbulbFill /> : <Test />}</LightButton>;
+	return <LightButton onClick={() => setTheme(!theme)}>{theme ? <RiLightbulbFill /> : <LightbulbLine />}</LightButton>;
 };
 
 export default LightSwitch;

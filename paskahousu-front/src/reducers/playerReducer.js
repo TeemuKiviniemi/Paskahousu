@@ -29,6 +29,8 @@ const playerReducer = (state = initialState, action) => {
 			else {
 				return { ...state, selectedCards: [...state.selectedCards, card] };
 			}
+		case "SET_DECK":
+			return { ...state, deck: action.data };
 
 		default:
 			return state;
@@ -53,6 +55,13 @@ export const setSelectedCards = (card) => {
 	return {
 		type: "SET_SELECTED_CARDS",
 		data: card,
+	};
+};
+
+export const setDeck = (cards) => {
+	return {
+		type: "SET_DECK",
+		data: cards,
 	};
 };
 
