@@ -31,11 +31,13 @@ button {
 
 .cards-remaining {
 	grid-column: 1 / span 2;
+	letter-spacing: 1px;
 }
 
 .other-players {
 	grid-column: 1;
 	grid-row: 2;
+	letter-spacing: 1px;
 }
 
 .latest-img {

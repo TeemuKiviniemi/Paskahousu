@@ -6,7 +6,7 @@ const Img = styled.img`
 	width: auto;
 	margin: 2px;
 	margin-top: 15px;
-	filter: drop-shadow(0mm 2mm 4mm rgba(0, 0, 0, 0.3));
+	filter: ${(props) => props.theme.dropShadow};
 	cursor: pointer;
 	transition: all 200ms;
 	filter: ${(props) => (!props.turn ? "brightness(0.85)" : null)};

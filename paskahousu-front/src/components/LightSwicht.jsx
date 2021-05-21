@@ -15,10 +15,12 @@ const LightButton = styled.button`
 	}
 `;
 
+const Test = styled(RiLightbulbLine)`
+	color: lightgray;
+`;
+
 const LightSwitch = ({ theme, setTheme }) => {
-	return (
-		<LightButton onClick={() => setTheme(!theme)}>{theme ? <RiLightbulbFill /> : <RiLightbulbLine />}</LightButton>
-	);
+	return <LightButton onClick={() => setTheme(!theme)}>{theme ? <RiLightbulbFill /> : <Test />}</LightButton>;
 };
 
 export default LightSwitch;
