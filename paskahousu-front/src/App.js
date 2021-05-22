@@ -41,7 +41,7 @@ function App() {
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
-	const playerState = useSelector((state) => state.player);
+	const player = useSelector((state) => state.player);
 
 	// Open connection to server to get data
 	useEffect(() => {
@@ -66,16 +66,20 @@ function App() {
 			logg.unshift(item);
 			setLog(logg);
 		});
+
+		socket.on("winner", (name) => {
+			console.log(name);
+		});
 	}, []);
 
 	const joinGame = () => {
-		socket.emit("join_game", { username: playerState.username, gameState: gameState });
+		socket.emit("join_game", { username: player.username, gameState: gameState });
 	};
 
 	// Raise cards from stack to players deck
 	const raiseCardStack = () => {
-		const newDeck = [...playerState.deck, ...gameState.stack];
-		dispatch(updateCardAmount(newDeck.length, playerState.username));
+		const newDeck = [...player.deck, ...gameState.stack];
+		dispatch(updateCardAmount(newDeck.length, player.username));
 		dispatch(setDeck(newDeck));
 		dispatch(updateStack([]));
 		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
@@ -89,22 +93,22 @@ function App() {
 
 	const drawRandomCard = async () => {
 		const newCard = await fetchCard(1);
-		dispatch(updateCardAmount(playerState.deck.length + 1, playerState.username));
+		dispatch(updateCardAmount(player.deck.length + 1, player.username));
 		socket.emit("updateGame", gameState);
-		dispatch(setDeck([...playerState.deck, newCard[0]]));
+		dispatch(setDeck([...player.deck, newCard[0]]));
 	};
 
 	// Select multiple cards to play next
 	// These cards need to have same value
 	const selectCardsToPlay = (num) => {
-		if (!playerState.turn) return;
+		if (!player.turn) return;
 
 		// if selected cards value is not same as previous, this will set selected cards to empty
-		if (playerState.selectedCards.length > 0 && playerState.selectedCards[0].value !== playerState.deck[num].value) {
+		if (player.selectedCards.length > 0 && player.selectedCards[0].value !== player.deck[num].value) {
 			dispatch(setSelectedCards(null));
 			alert("Et voi valita eri kortteja pelattavaksi samalla siirrolla");
 		} else {
-			dispatch(setSelectedCards(playerState.deck[num]));
+			dispatch(setSelectedCards(player.deck[num]));
 		}
 	};
 
@@ -119,38 +123,36 @@ function App() {
 	// Sets new cards to players deck
 	const handleDeck = async () => {
 		const latest = {
-			image: playerState.selectedCards[0].image,
-			value: playerState.selectedCards[0].value,
-			code: playerState.selectedCards[0].code,
+			image: player.selectedCards[0].image,
+			value: player.selectedCards[0].value,
+			code: player.selectedCards[0].code,
 		};
 		dispatch(updateLatest(latest));
-		dispatch(updateStack(playerState.selectedCards));
+		dispatch(updateStack(player.selectedCards));
 
-		if (playerState.deck.length > 3 && gameState.remaining === 0) {
-			dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
-			dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
-		} else if (playerState.deck.length > 3) {
+		if (player.deck.length > 3 && gameState.remaining === 0) {
+			dispatch(updateCardAmount(player.deck.length - player.selectedCards.length, player.username));
+			dispatch(setDeck(player.deck.filter((card) => player.selectedCards.indexOf(card) === -1)));
+		} else if (player.deck.length > 3) {
 			const amountToFetch =
-				gameState.remaining > 3
-					? 3 - (playerState.deck.length - playerState.selectedCards.length)
-					: gameState.remaining;
+				gameState.remaining > 3 ? 3 - (player.deck.length - player.selectedCards.length) : gameState.remaining;
 			if (amountToFetch <= 0) {
-				dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
-				dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
+				dispatch(updateCardAmount(player.deck.length - player.selectedCards.length, player.username));
+				dispatch(setDeck(player.deck.filter((card) => player.selectedCards.indexOf(card) === -1)));
 			} else {
 				const newCards = await fetchCard(amountToFetch);
-				const newDeck = playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
-				dispatch(updateCardAmount(playerState.deck.length - amountToFetch, playerState.username));
+				const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
+				dispatch(updateCardAmount(player.deck.length - amountToFetch, player.username));
 				dispatch(setDeck([...newDeck, ...newCards]));
 			}
 		} else if (gameState.remaining > 0) {
-			const newCards = await fetchCard(playerState.selectedCards.length);
-			const newDeck = playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1);
-			dispatch(updateCardAmount(newCards.length + newDeck.length, playerState.username));
+			const newCards = await fetchCard(player.selectedCards.length);
+			const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
+			dispatch(updateCardAmount(newCards.length + newDeck.length, player.username));
 			dispatch(setDeck([...newCards, ...newDeck]));
 		} else if (gameState.remaining === 0) {
-			dispatch(updateCardAmount(playerState.deck.length - playerState.selectedCards.length, playerState.username));
-			dispatch(setDeck(playerState.deck.filter((card) => playerState.selectedCards.indexOf(card) === -1)));
+			dispatch(updateCardAmount(player.deck.length - player.selectedCards.length, player.username));
+			dispatch(setDeck(player.deck.filter((card) => player.selectedCards.indexOf(card) === -1)));
 		}
 
 		dispatch(setSelectedCards(null));
@@ -158,36 +160,36 @@ function App() {
 
 	// Checks if players move is valid and changes turn / loads new cards after that.
 	const gameLogic = () => {
-		if (playerState.turn === true && playerState.selectedCards.length > 0) {
-			const validMove = checkValidMove(playerState.selectedCards[0].value, gameState.latestCard.value);
+		if (player.turn === true && player.selectedCards.length > 0) {
+			const validMove = checkValidMove(player.selectedCards[0].value, gameState.latestCard.value);
 
-			if (validMove === "ok" && playerState.selectedCards.length === 4) {
+			if (validMove === "ok" && player.selectedCards.length === 4) {
 				handleDeck();
-				dispatch(updateStack([], playerState.username));
+				dispatch(updateStack([], player.username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 				socket.emit("log", {
-					text: `Kaatuu! ${playerState.username} pelasi: ${playerState.selectedCards[0].code}`,
+					text: `Kaatuu! ${player.username} pelasi: ${player.selectedCards[0].code}`,
 					room: gameState.room,
 				});
 			} else if (validMove === "ok") {
 				handleDeck();
 				socket.emit("log", {
-					text: `${playerState.username} pelasi ${playerState.selectedCards.length} kpl ${playerState.selectedCards[0].code}`,
+					text: `${player.username} pelasi ${player.selectedCards.length} kpl ${player.selectedCards[0].code}`,
 					room: gameState.room,
 				});
 				changeTurn();
 			} else if (validMove === "kaatuu") {
 				handleDeck();
 				socket.emit("log", {
-					text: `Kaatuu! ${playerState.username} pelasi ${playerState.selectedCards[0].code}`,
+					text: `Kaatuu! ${player.username} pelasi ${player.selectedCards[0].code}`,
 					room: gameState.room,
 				});
-				dispatch(updateStack([], playerState.username));
+				dispatch(updateStack([], player.username));
 				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
 			} else if (validMove === "jatka") {
 				handleDeck();
 				socket.emit("log", {
-					text: `${playerState.username} pelasi ${playerState.selectedCards[0].code}`,
+					text: `${player.username} pelasi ${player.selectedCards[0].code}`,
 					room: gameState.room,
 				});
 			} else if (validMove === "not ok") {
@@ -205,21 +207,15 @@ function App() {
 		<Router>
 			<ThemeProvider theme={theme ? lightTheme : darkTheme}>
 				<AppFrame>
+					<LightSwitch theme={theme} setTheme={setTheme} />
 					<Route path="/" exact>
 						<JoinToGame joinGame={joinGame} />
 					</Route>
 
 					<Route path="/game">
-						<GameInfo raiseCardStack={raiseCardStack} turn={playerState.turn} />
-						<Player
-							turn={playerState.turn}
-							gameLogic={gameLogic}
-							deck={playerState.deck}
-							drawRandomCard={drawRandomCard}
-							selectCardsToPlay={selectCardsToPlay}
-						/>
+						<GameInfo raiseCardStack={raiseCardStack} />
+						<Player gameLogic={gameLogic} drawRandomCard={drawRandomCard} selectCardsToPlay={selectCardsToPlay} />
 						<Log log={log} room={gameState.room} />
-						<LightSwitch theme={theme} setTheme={setTheme} />
 					</Route>
 				</AppFrame>
 			</ThemeProvider>

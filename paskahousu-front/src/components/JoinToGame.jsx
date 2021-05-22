@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setRoom } from "../reducers/gameReducer";
 import { setUsername } from "../reducers/playerReducer";
+import { CgPushChevronUpR } from "react-icons/cg";
 
 const Container = styled.div`
 	height: 100vh;

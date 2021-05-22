@@ -1,11 +1,17 @@
 import { useSelector } from "react-redux";
 import styled from "styled-components";
 
+const Container = styled.div`
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	min-height: 180px;
+`;
+
 const Img = styled.img`
 	height: 150px;
 	width: auto;
-	margin: 2px;
-	margin-top: 15px;
+	margin: 0px 3px 15px 3px;
 	filter: ${(props) => props.theme.dropShadow};
 	cursor: pointer;
 	transition: all 200ms;
@@ -20,7 +26,7 @@ function Hand({ selectCardsToPlay }) {
 	const player = useSelector((state) => state.player);
 
 	return (
-		<div className="deck">
+		<Container>
 			{player.deck.map((card, id) => {
 				return (
 					<Img
@@ -33,7 +39,7 @@ function Hand({ selectCardsToPlay }) {
 					/>
 				);
 			})}
-		</div>
+		</Container>
 	);
 }
 
