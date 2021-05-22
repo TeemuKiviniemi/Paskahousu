@@ -18,11 +18,12 @@ const Button = styled.button`
 
 function Player({ gameLogic, drawRandomCard, selectCardsToPlay }) {
 	const player = useSelector((state) => state.player);
+	const remaining = useSelector((state) => state.game.remaining);
 
 	return (
 		<PlayerFrame>
 			<Hand selectCardsToPlay={selectCardsToPlay} />
-			<Button onClick={() => drawRandomCard(1)} disabled={!player.turn}>
+			<Button onClick={() => drawRandomCard(1)} disabled={!player.turn || remaining === 0}>
 				Random
 			</Button>
 			<Button onClick={() => gameLogic()} disabled={!player.turn}>

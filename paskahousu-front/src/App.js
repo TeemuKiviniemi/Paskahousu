@@ -92,10 +92,14 @@ function App() {
 	};
 
 	const drawRandomCard = async () => {
-		const newCard = await fetchCard(1);
-		dispatch(updateCardAmount(player.deck.length + 1, player.username));
-		socket.emit("updateGame", gameState);
-		dispatch(setDeck([...player.deck, newCard[0]]));
+		try {
+			const newCard = await fetchCard(1);
+			dispatch(updateCardAmount(player.deck.length + 1, player.username));
+			dispatch(setDeck([...player.deck, newCard[0]]));
+			socket.emit("updateGame", gameState);
+		} catch (err) {
+			console.log(err);
+		}
 	};
 
 	// Select multiple cards to play next
@@ -114,9 +118,14 @@ function App() {
 
 	// fetch new card, update players deck and send num of remaining to server
 	const fetchCard = async (amount) => {
-		dispatch(updateRemaining(gameState.remaining - amount));
-		const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
-		return newCards.data.cards;
+		try {
+			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
+			dispatch(updateRemaining(gameState.remaining - amount));
+			console.log(newCards.data.remaining);
+			return newCards.data.cards;
+		} catch (err) {
+			throw new Error("Failed to load new card");
+		}
 	};
 
 	// Updates latest card to gameState
@@ -140,16 +149,24 @@ function App() {
 				dispatch(updateCardAmount(player.deck.length - player.selectedCards.length, player.username));
 				dispatch(setDeck(player.deck.filter((card) => player.selectedCards.indexOf(card) === -1)));
 			} else {
-				const newCards = await fetchCard(amountToFetch);
-				const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
-				dispatch(updateCardAmount(player.deck.length - amountToFetch, player.username));
-				dispatch(setDeck([...newDeck, ...newCards]));
+				try {
+					const newCards = await fetchCard(amountToFetch);
+					const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
+					dispatch(updateCardAmount(player.deck.length - amountToFetch, player.username));
+					dispatch(setDeck([...newDeck, ...newCards]));
+				} catch (err) {
+					console.log(err);
+				}
 			}
 		} else if (gameState.remaining > 0) {
-			const newCards = await fetchCard(player.selectedCards.length);
-			const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
-			dispatch(updateCardAmount(newCards.length + newDeck.length, player.username));
-			dispatch(setDeck([...newCards, ...newDeck]));
+			try {
+				const newCards = await fetchCard(player.selectedCards.length);
+				const newDeck = player.deck.filter((card) => player.selectedCards.indexOf(card) === -1);
+				dispatch(updateCardAmount(newCards.length + newDeck.length, player.username));
+				dispatch(setDeck([...newCards, ...newDeck]));
+			} catch (err) {
+				console.log(err);
+			}
 		} else if (gameState.remaining === 0) {
 			dispatch(updateCardAmount(player.deck.length - player.selectedCards.length, player.username));
 			dispatch(setDeck(player.deck.filter((card) => player.selectedCards.indexOf(card) === -1)));
@@ -211,7 +228,6 @@ function App() {
 					<Route path="/" exact>
 						<JoinToGame joinGame={joinGame} />
 					</Route>
-
 					<Route path="/game">
 						<GameInfo raiseCardStack={raiseCardStack} />
 						<Player gameLogic={gameLogic} drawRandomCard={drawRandomCard} selectCardsToPlay={selectCardsToPlay} />
