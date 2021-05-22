@@ -35,12 +35,6 @@
 	align-items: center;
 }
 
-h3 {
-	display: flex;
-	width: 100%;
-	border-bottom: 1px solid #808080;
-	margin-bottom: 0px;
-}
 h2 {
 	margin-bottom: 25px;
 }

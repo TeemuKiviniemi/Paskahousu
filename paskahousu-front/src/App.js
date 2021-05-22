@@ -38,6 +38,7 @@ const AppFrame = styled.div`
 function App() {
 	const [theme, setTheme] = useState(true);
 	const [log, setLog] = useState([]);
+	const [winner, setWinner] = useState();
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
@@ -68,7 +69,7 @@ function App() {
 		});
 
 		socket.on("winner", (name) => {
-			console.log(name);
+			setWinner(name);
 		});
 	}, []);
 
@@ -120,10 +121,11 @@ function App() {
 	const fetchCard = async (amount) => {
 		try {
 			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
-			dispatch(updateRemaining(gameState.remaining - amount));
+
 			console.log(newCards.data.remaining);
 			return newCards.data.cards;
 		} catch (err) {
+			dispatch(updateRemaining(gameState.remaining + amount));
 			throw new Error("Failed to load new card");
 		}
 	};
@@ -224,6 +226,7 @@ function App() {
 		<Router>
 			<ThemeProvider theme={theme ? lightTheme : darkTheme}>
 				<AppFrame>
+					{winner && <h1>{`Winner is ${winner}!`}</h1>}
 					<LightSwitch theme={theme} setTheme={setTheme} />
 					<Route path="/" exact>
 						<JoinToGame joinGame={joinGame} />
