@@ -28,7 +28,6 @@ io.on("connection", (socket) => {
 			state.players = [...playersInRoom, user];
 			players.push(user);
 
-			io.emit("players", players);
 			if (user.turnNum === 0) {
 				const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
 				turn.push({ room: state.room, turn: 0, deckId: data.deck_id });
@@ -39,12 +38,12 @@ io.on("connection", (socket) => {
 			} else {
 				objIndex = turn.findIndex((i) => i.room === state.room);
 				state.deckId = turn[objIndex].deckId;
-				state.remaining = 46;
+				console.log(playersInRoom.length);
+				state.remaining = 52 - (playersInRoom.length + 1) * 3;
 				io.to(socket.id).emit("turn", false);
 				io.to(socket.id).emit("onStart", { deckId: turn[objIndex].deckId });
 			}
 
-			io.to(state.room).emit("players", players);
 			io.to(state.room).emit("log", `${username} liittyi peliin`);
 
 			io.to(state.room).emit("updateGame", state);
@@ -84,7 +83,7 @@ io.on("connection", (socket) => {
 
 	socket.on("disconnect", () => {
 		players = players.filter((u) => u.id !== socket.id);
-
+		console.log(players);
 		if (players.length === 0) {
 			turn = [];
 			log = [];
