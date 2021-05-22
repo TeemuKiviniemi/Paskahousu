@@ -70,8 +70,16 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("updateGame", (gameState) => {
-		console.log(gameState);
+		// console.log(gameState.players);
+		// console.log(gameState.remaining);
 		io.to(gameState.room).emit("updateGame", gameState);
+
+		gameState.players.forEach((player) => {
+			if (player.cards === 0) {
+				console.log("WINNER ", player.username);
+				io.to(gameState.room).emit("winner", player.username);
+			}
+		});
 	});
 
 	socket.on("disconnect", () => {
