@@ -10,6 +10,7 @@ import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { updateState, setDeckId, updateRemaining } from "./reducers/gameReducer";
 import { setTurn, setDeck } from "./reducers/playerReducer";
+import { addEvent } from "./reducers/logReducer";
 
 const socket = io("http://localhost:4000");
 
@@ -27,12 +28,12 @@ const AppFrame = styled.div`
 
 function App() {
 	const [theme, setTheme] = useState(true);
-	const [log, setLog] = useState([]);
 	const [winner, setWinner] = useState();
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
 	const player = useSelector((state) => state.player);
+	const log = useSelector((state) => state.log);
 
 	// Open connection to server to get data
 	useEffect(() => {
@@ -57,9 +58,7 @@ function App() {
 
 		// Get events from the server
 		socket.on("log", (item) => {
-			const logg = log;
-			logg.unshift(item);
-			setLog(logg);
+			dispatch(addEvent(item));
 		});
 
 		socket.on("winner", (name) => {
@@ -94,7 +93,7 @@ function App() {
 						<JoinToGame joinGame={joinGame} />
 					</Route>
 					<Route path="/game">
-						<Game socket={socket} fetchCard={fetchCard} log={log} />
+						<Game socket={socket} fetchCard={fetchCard} />
 					</Route>
 				</AppFrame>
 			</ThemeProvider>

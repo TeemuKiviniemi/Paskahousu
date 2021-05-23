@@ -6,10 +6,12 @@ import { createStore, combineReducers } from "redux";
 import { Provider } from "react-redux";
 import playerReducer from "./reducers/playerReducer";
 import gameReducer from "./reducers/gameReducer";
+import logReducer from "./reducers/logReducer";
 
 const reducers = combineReducers({
 	player: playerReducer,
 	game: gameReducer,
+	log: logReducer,
 });
 
 const store = createStore(reducers);

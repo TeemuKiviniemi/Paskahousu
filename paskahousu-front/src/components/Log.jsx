@@ -1,3 +1,4 @@
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 
 const LogContainer = styled.div`
@@ -21,7 +22,10 @@ const List = styled.ul`
 	overflow: scroll;
 `;
 
-function Log({ log, room }) {
+function Log() {
+	const log = useSelector((state) => state.log);
+	const room = useSelector((state) => state.game.room);
+
 	return (
 		<LogContainer>
 			<StyledH4>{room}</StyledH4>

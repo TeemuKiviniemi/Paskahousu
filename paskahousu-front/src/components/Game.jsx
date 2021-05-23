@@ -6,7 +6,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { updateStack, updateLatest, updateCardAmount } from "../reducers/gameReducer";
 import { setSelectedCards, setDeck } from "../reducers/playerReducer";
 
-const Game = ({ socket, fetchCard, log }) => {
+const Game = ({ socket, fetchCard }) => {
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
 	const player = useSelector((state) => state.player);
@@ -145,9 +145,9 @@ const Game = ({ socket, fetchCard, log }) => {
 
 	return (
 		<>
+			<Log />
 			<GameInfo raiseCardStack={raiseCardStack} />
 			<Player gameLogic={gameLogic} drawRandomCard={drawRandomCard} selectCardsToPlay={selectCardsToPlay} />
-			<Log log={log} room={gameState.room} />
 		</>
 	);
 };
