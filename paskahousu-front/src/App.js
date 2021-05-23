@@ -8,15 +8,8 @@ import { io } from "socket.io-client";
 import { BrowserRouter as Router, Route } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
-import {
-	updateState,
-	updateStack,
-	updateLatest,
-	updateCardAmount,
-	setDeckId,
-	updateRemaining,
-} from "./reducers/gameReducer";
-import { setTurn, setSelectedCards, setDeck } from "./reducers/playerReducer";
+import { updateState, setDeckId, updateRemaining } from "./reducers/gameReducer";
+import { setTurn, setDeck } from "./reducers/playerReducer";
 
 const socket = io("http://localhost:4000");
 
@@ -54,8 +47,12 @@ function App() {
 		// Loads 3 cards to hand when game starts and sets deckId
 		socket.on("onStart", async (data) => {
 			dispatch(setDeckId(data.deckId));
-			const newCards = await fetchCard(3);
-			dispatch(setDeck(newCards));
+			try {
+				const newCards = await fetchCard(3);
+				dispatch(setDeck(newCards));
+			} catch (err) {
+				console.log(err);
+			}
 		});
 
 		// Get events from the server
