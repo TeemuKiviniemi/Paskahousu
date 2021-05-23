@@ -4,7 +4,7 @@ const http = require("http").createServer(app);
 const io = require("socket.io")(http);
 
 let players = [];
-let turn = [];
+let game = [];
 
 io.on("connection", (socket) => {
 	socket.on("join_game", async (data) => {
@@ -30,18 +30,17 @@ io.on("connection", (socket) => {
 
 			if (user.turnNum === 0) {
 				const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
-				turn.push({ room: state.room, turn: 0, deckId: data.deck_id });
+				game.push({ room: state.room, turn: 0, deckId: data.deck_id });
 				state.deckId = data.deck_id;
 				state.remaining = 49;
 				io.to(socket.id).emit("turn", true);
 				io.to(socket.id).emit("onStart", { deckId: data.deck_id });
 			} else {
-				objIndex = turn.findIndex((i) => i.room === state.room);
-				state.deckId = turn[objIndex].deckId;
-				console.log(playersInRoom.length);
+				gameIndex = game.findIndex((i) => i.room === state.room);
+				state.deckId = game[gameIndex].deckId;
 				state.remaining = 52 - (playersInRoom.length + 1) * 3;
 				io.to(socket.id).emit("turn", false);
-				io.to(socket.id).emit("onStart", { deckId: turn[objIndex].deckId });
+				io.to(socket.id).emit("onStart", { deckId: game[gameIndex].deckId });
 			}
 
 			io.to(state.room).emit("log", `${username} liittyi peliin`);
@@ -51,12 +50,12 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("turn", (data) => {
-		roomIndex = turn.findIndex((i) => i.room === data.room);
-		turn[roomIndex].turn === data.playerAmount - 1 ? (turn[roomIndex].turn = 0) : (turn[roomIndex].turn += 1);
+		roomIndex = game.findIndex((i) => i.room === data.room);
+		game[roomIndex].turn === data.playerAmount - 1 ? (game[roomIndex].turn = 0) : (game[roomIndex].turn += 1);
 
 		playersInRoom = players.filter((p) => p.room === data.room);
 		playersInRoom.forEach((player) => {
-			if (player.turnNum === turn[roomIndex].turn) {
+			if (player.turnNum === game[roomIndex].turn) {
 				io.to(player.id).emit("turn", true);
 			} else {
 				io.to(player.id).emit("turn", false);
@@ -82,11 +81,17 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("disconnect", () => {
+		const user = players.find((u) => u.id === socket.id);
+		console.log("DISCONNECTED");
+		console.log({ user }, socket.id);
+		if (user) {
+			console.log("here");
+			io.to(user.room).emit("log", `${user.username} disconnected from game`);
+		}
+
 		players = players.filter((u) => u.id !== socket.id);
-		console.log(players);
 		if (players.length === 0) {
-			turn = [];
-			log = [];
+			game = [];
 		}
 	});
 });
