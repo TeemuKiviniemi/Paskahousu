@@ -10,7 +10,7 @@ io.on("connection", (socket) => {
 	socket.on("join_game", async (data) => {
 		let username = data.username;
 		let state = data.gameState;
-		// console.log("STATE", state);
+		console.log("JOIN", data.username, data.gameState.room);
 
 		if (username !== null && state.room !== null) {
 			socket.join(state.room);
@@ -67,25 +67,45 @@ io.on("connection", (socket) => {
 		io.to(data.room).emit("log", data.text);
 	});
 
-	socket.on("updateGame", (gameState) => {
-		// console.log(gameState.players);
-		// console.log(gameState.remaining);
+	socket.on("updateGame", async (gameState) => {
 		io.to(gameState.room).emit("updateGame", gameState);
 
+		// checks if someone won and send name to room
 		gameState.players.forEach((player) => {
 			if (player.cards === 0) {
-				console.log("WINNER ", player.username);
 				io.to(gameState.room).emit("winner", player.username);
+				axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/shuffle/`);
 			}
 		});
 	});
 
+	socket.on("startNew", (oldState) => {
+		console.log({ oldState });
+
+		const startPlayers = oldState.players.map((player) => {
+			return { ...player, cards: 3 };
+		});
+
+		const startState = {
+			room: oldState.room,
+			deckId: oldState.deckId,
+			players: startPlayers,
+			remaining: 52 - oldState.players.length * 3,
+			latestCard: {
+				image: "https://deckofcardsapi.com/static/img/X2.png",
+				value: 0,
+				code: 0,
+			},
+			stack: [],
+		};
+
+		io.to(oldState.room).emit("startNew", startState);
+	});
+
 	socket.on("disconnect", () => {
 		const user = players.find((u) => u.id === socket.id);
-		console.log("DISCONNECTED");
-		console.log({ user }, socket.id);
 		if (user) {
-			console.log("here");
+			console.log(`DISCONNECT ${user.username}`);
 			io.to(user.room).emit("log", `${user.username} disconnected from game`);
 		}
 
