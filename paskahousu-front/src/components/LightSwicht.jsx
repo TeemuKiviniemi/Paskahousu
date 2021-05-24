@@ -10,6 +10,7 @@ const LightButton = styled.button`
 	background-color: transparent;
 	border: transparent;
 	border-radius: 3px;
+	z-index: 11;
 	&:hover {
 		background-color: rgba(0, 0, 0, 0.15);
 	}

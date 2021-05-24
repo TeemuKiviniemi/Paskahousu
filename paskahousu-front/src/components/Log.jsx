@@ -8,6 +8,7 @@ const LogContainer = styled.div`
 	padding-left: 15px;
 	top: 10px;
 	font-size: 14px;
+	z-index: 11;
 	-webkit-mask-image: linear-gradient(to bottom, black 70%, transparent 100%);
 	mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
 `;

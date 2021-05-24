@@ -4,6 +4,7 @@ import "./index.css";
 import App from "./App";
 import { createStore, combineReducers } from "redux";
 import { Provider } from "react-redux";
+import { composeWithDevTools } from "redux-devtools-extension";
 import playerReducer from "./reducers/playerReducer";
 import gameReducer from "./reducers/gameReducer";
 import logReducer from "./reducers/logReducer";
@@ -14,7 +15,7 @@ const reducers = combineReducers({
 	log: logReducer,
 });
 
-const store = createStore(reducers);
+const store = createStore(reducers, composeWithDevTools());
 
 ReactDOM.render(
 	<Provider store={store}>

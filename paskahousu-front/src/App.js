@@ -3,6 +3,7 @@ import styled, { ThemeProvider } from "styled-components";
 import Game from "./components/Game";
 import JoinToGame from "./components/JoinToGame";
 import LightSwitch from "./components/LightSwicht";
+import StartNewGame from "./components/StartNewGame";
 import { lightTheme, darkTheme } from "./Theme";
 import { io } from "socket.io-client";
 import { BrowserRouter as Router, Route } from "react-router-dom";
@@ -28,12 +29,11 @@ const AppFrame = styled.div`
 
 function App() {
 	const [theme, setTheme] = useState(true);
-	const [winner, setWinner] = useState();
+	const [winner, setWinner] = useState(null);
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
 	const player = useSelector((state) => state.player);
-	const log = useSelector((state) => state.log);
 
 	// Open connection to server to get data
 	useEffect(() => {
@@ -64,6 +64,13 @@ function App() {
 		socket.on("winner", (name) => {
 			setWinner(name);
 		});
+
+		socket.on("startNew", (startState) => {
+			setWinner(null);
+			dispatch(updateState(startState));
+			startNewGame();
+			dispatch(addEvent("NEW GAME HAS STARTED"));
+		});
 	}, []);
 
 	const joinGame = () => {
@@ -83,11 +90,25 @@ function App() {
 		}
 	};
 
+	const startNewGame = async () => {
+		try {
+			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=3`);
+			console.log(newCards.data.remaining);
+			dispatch(setDeck(newCards.data.cards));
+		} catch (err) {
+			console.log(err);
+		}
+	};
+
+	const startNew = () => {
+		socket.emit("startNew", gameState);
+	};
+
 	return (
 		<Router>
 			<ThemeProvider theme={theme ? lightTheme : darkTheme}>
 				<AppFrame>
-					{winner && <h1>{`Winner is ${winner}!`}</h1>}
+					{winner && <StartNewGame winner={winner} startNew={startNew} />}
 					<LightSwitch theme={theme} setTheme={setTheme} />
 					<Route path="/" exact>
 						<JoinToGame joinGame={joinGame} />

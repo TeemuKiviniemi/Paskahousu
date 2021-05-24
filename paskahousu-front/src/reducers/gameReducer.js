@@ -45,7 +45,7 @@ const gameReducer = (state = initialState, action) => {
 			newState.deckId = action.data;
 			return newState;
 		}
-		case "UPDATE_REMAINIG": {
+		case "UPDATE_REMAINING": {
 			let newState = state;
 			newState.remaining = action.data;
 			return newState;
@@ -100,7 +100,7 @@ export const setDeckId = (deckId) => {
 
 export const updateRemaining = (amount) => {
 	return {
-		type: "UPDATE_REMAINIG",
+		type: "UPDATE_REMAINING",
 		data: amount,
 	};
 };
