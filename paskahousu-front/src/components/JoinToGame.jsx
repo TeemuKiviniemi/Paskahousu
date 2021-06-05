@@ -1,6 +1,6 @@
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { setRoom } from "../reducers/gameReducer";
 import { setUsername } from "../reducers/playerReducer";
 
@@ -13,7 +13,7 @@ const Container = styled.div`
 	align-items: center;
 `;
 
-const InputFrame = styled.div`
+const Frame = styled.div`
 	grid-row-start: 2;
 	background-color: white;
 	height: min-content;
@@ -54,25 +54,42 @@ const StyledH1 = styled.h1`
 	letter-spacing: 1px;
 `;
 
-function JoinToGame({ joinGame }) {
+function JoinToGame({ joinGame, startGame }) {
 	const dispatch = useDispatch();
+	const game = useSelector((state) => state.game);
+	const turn = useSelector((state) => state.player.turn);
 
+	console.log(game);
 	return (
 		<Container>
-			<StyledH1>♦️♠️ Welcome to play Paskahousu ♥️♣️</StyledH1>
-			<InputFrame>
-				<StyledP>Set username and room</StyledP>
-				<input
-					className="set-username"
-					type="text"
-					placeholder="Username"
-					onChange={(e) => dispatch(setUsername(e.target.value))}
-				/>
-				<input type="text" placeholder="Room" onChange={(e) => dispatch(setRoom(e.target.value))} />
-				<JoinButton to="/game" onClick={joinGame}>
-					Join Game
-				</JoinButton>
-			</InputFrame>
+			<StyledH1>♦️♠️ Paskahousu ♥️♣️</StyledH1>
+
+			{!(game.players.length > 0) ? (
+				<Frame>
+					<StyledP>Set username and room</StyledP>
+					<input
+						className="set-username"
+						type="text"
+						placeholder="Username"
+						onChange={(e) => dispatch(setUsername(e.target.value))}
+					/>
+					<input type="text" placeholder="Room" onChange={(e) => dispatch(setRoom(e.target.value))} />
+					<JoinButton to="/" onClick={joinGame}>
+						Join Game
+					</JoinButton>
+				</Frame>
+			) : (
+				<Frame>
+					<StyledP>Players in room {game.room}</StyledP>
+					<ul>
+						{game.players.map((player) => {
+							return <li>{player.username}</li>;
+						})}
+					</ul>
+					<br />
+					{turn ? <button onClick={() => startGame()}>Start</button> : <p>Waiting for host to start game</p>}
+				</Frame>
+			)}
 		</Container>
 	);
 }

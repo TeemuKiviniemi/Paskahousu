@@ -9,6 +9,7 @@ const initialState = {
 		code: 0,
 	},
 	stack: [],
+	started: false,
 };
 
 const gameReducer = (state = initialState, action) => {

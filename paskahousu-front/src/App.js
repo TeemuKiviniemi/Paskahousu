@@ -6,7 +6,7 @@ import LightSwitch from "./components/LightSwicht";
 import StartNewGame from "./components/StartNewGame";
 import { lightTheme, darkTheme } from "./Theme";
 import { io } from "socket.io-client";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import { BrowserRouter as Router, Route, Redirect } from "react-router-dom";
 import axios from "axios";
 import { useDispatch, useSelector } from "react-redux";
 import { updateState, setDeckId, updateRemaining } from "./reducers/gameReducer";
@@ -30,6 +30,7 @@ const AppFrame = styled.div`
 function App() {
 	const [theme, setTheme] = useState(true);
 	const [winner, setWinner] = useState(null);
+	const [started, setStarted] = useState(false);
 
 	const dispatch = useDispatch();
 	const gameState = useSelector((state) => state.game);
@@ -56,6 +57,10 @@ function App() {
 			}
 		});
 
+		socket.on("start_game", (start) => {
+			setStarted(true);
+		});
+
 		// Get events from the server
 		socket.on("log", (item) => {
 			dispatch(addEvent(item));
@@ -75,6 +80,11 @@ function App() {
 
 	const joinGame = () => {
 		socket.emit("join_game", { username: player.username, gameState: gameState });
+	};
+
+	// Host (first in room) can start game b
+	const startGame = () => {
+		socket.emit("start_game", gameState.room);
 	};
 
 	// fetch new card, update players deck and send num of remaining to server
@@ -111,9 +121,13 @@ function App() {
 					{winner && <StartNewGame winner={winner} startNew={startNew} />}
 					<LightSwitch theme={theme} setTheme={setTheme} />
 					<Route path="/" exact>
-						<JoinToGame joinGame={joinGame} />
+						{started ? (
+							<Redirect to={`/game/${gameState.deckId}`} />
+						) : (
+							<JoinToGame joinGame={joinGame} startGame={startGame} />
+						)}
 					</Route>
-					<Route path="/game">
+					<Route path={`/game/${gameState.deckId}`}>
 						<Game socket={socket} fetchCard={fetchCard} />
 					</Route>
 				</AppFrame>
