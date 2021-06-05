@@ -79,6 +79,11 @@ io.on("connection", (socket) => {
 		});
 	});
 
+	socket.on("start_game", (room) => {
+		console.log("START GAME");
+		io.to(room).emit("start_game", true);
+	});
+
 	socket.on("startNew", (oldState) => {
 		console.log({ oldState });
 
