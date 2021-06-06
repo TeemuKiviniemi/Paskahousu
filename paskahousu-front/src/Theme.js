@@ -7,5 +7,5 @@ export const lightTheme = {
 export const darkTheme = {
 	color: "#fafafa",
 	backgroundColor: "#393e46",
-	dropShadow: "drop-shadow(0mm 2mm 4mm rgba(0, 0, 0, 0.7));",
+	dropShadow: "drop-shadow(0mm 2mm 4mm rgba(0, 0, 0, 0.6))",
 };

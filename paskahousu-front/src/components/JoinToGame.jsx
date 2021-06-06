@@ -1,20 +1,16 @@
 import styled from "styled-components";
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { setRoom } from "../reducers/gameReducer";
 import { setUsername } from "../reducers/playerReducer";
 
 const Container = styled.div`
-	height: 100vh;
-	width: 100vw;
-	display: grid;
-	grid-template-rows: 30% 40% 30%;
+	display: flex;
+	flex-direction: column;
 	justify-items: center;
 	align-items: center;
 `;
 
 const Frame = styled.div`
-	grid-row-start: 2;
 	background-color: white;
 	height: min-content;
 	display: flex;
@@ -23,11 +19,12 @@ const Frame = styled.div`
 	flex-direction: column;
 	box-shadow: rgba(100, 100, 111, 0.25) 0px 7px 10px 0px;
 	border-radius: 2px;
-	padding: 40px 60px;
+	padding: 40px 10px;
+	min-width: 315px;
 	margin-top: 25px;
 `;
 
-const JoinButton = styled(Link)`
+const Button = styled.button`
 	margin-top: 15px;
 	padding: 6px 15px;
 	border: 1px solid darkgray;
@@ -49,9 +46,22 @@ const StyledP = styled.p`
 `;
 
 const StyledH1 = styled.h1`
-	grid-row-start: 1;
-	align-self: flex-end;
 	letter-spacing: 1px;
+`;
+
+const FooterText = styled.p`
+	position: absolute;
+	bottom: 10px;
+	left: 10px;
+	font-size: 14px;
+`;
+
+const Span = styled.span`
+	font-weight: 600;
+`;
+
+const Li = styled.li`
+	color: rgb(60, 60, 60);
 `;
 
 function JoinToGame({ joinGame, startGame }) {
@@ -64,7 +74,7 @@ function JoinToGame({ joinGame, startGame }) {
 		<Container>
 			<StyledH1>♦️♠️ Paskahousu ♥️♣️</StyledH1>
 
-			{!(game.players.length > 0) ? (
+			{game.players.length === 0 ? (
 				<Frame>
 					<StyledP>Set username and room</StyledP>
 					<input
@@ -74,20 +84,20 @@ function JoinToGame({ joinGame, startGame }) {
 						onChange={(e) => dispatch(setUsername(e.target.value))}
 					/>
 					<input type="text" placeholder="Room" onChange={(e) => dispatch(setRoom(e.target.value))} />
-					<JoinButton to="/" onClick={joinGame}>
-						Join Game
-					</JoinButton>
+					<Button onClick={() => joinGame()}>Join Game</Button>
 				</Frame>
 			) : (
 				<Frame>
-					<StyledP>Players in room {game.room}</StyledP>
+					<StyledP>
+						Players in <Span>{game.room}</Span>
+					</StyledP>
 					<ul>
 						{game.players.map((player) => {
-							return <li>{player.username}</li>;
+							return <Li key={player.username}>{player.username}</Li>;
 						})}
 					</ul>
 					<br />
-					{turn ? <button onClick={() => startGame()}>Start</button> : <p>Waiting for host to start game</p>}
+					{turn ? <Button onClick={() => startGame()}>Start</Button> : <p>Waiting for host to start game</p>}
 				</Frame>
 			)}
 		</Container>
