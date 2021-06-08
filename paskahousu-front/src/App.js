@@ -47,8 +47,8 @@ function App() {
 		});
 
 		// Loads 3 cards to hand when game starts and sets deckId
-		socket.on("onStart", async (data) => {
-			dispatch(setDeckId(data.deckId));
+		socket.on("onStart", async (deckId) => {
+			dispatch(setDeckId(deckId));
 			try {
 				const newCards = await fetchCard(3);
 				dispatch(setDeck(newCards));
@@ -91,8 +91,8 @@ function App() {
 	const fetchCard = async (amount) => {
 		try {
 			dispatch(updateRemaining(gameState.remaining - amount));
-			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=${amount}`);
-			console.log(newCards.data.remaining);
+			const newCards = await axios.get(`http://localhost:4000/card/${gameState.deckId}/${amount}`);
+			console.log({ newCards });
 			return newCards.data.cards;
 		} catch (err) {
 			dispatch(updateRemaining(gameState.remaining + amount));

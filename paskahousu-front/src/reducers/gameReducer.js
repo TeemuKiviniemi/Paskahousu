@@ -4,9 +4,8 @@ const initialState = {
 	players: [],
 	remaining: 52,
 	latestCard: {
-		image: "https://deckofcardsapi.com/static/img/X2.png",
 		value: 0,
-		code: 0,
+		code: "X2",
 	},
 	stack: [],
 	started: false,

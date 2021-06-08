@@ -21,7 +21,7 @@ const Game = ({ socket, fetchCard }) => {
 		dispatch(updateCardAmount(newDeck.length, player.username));
 		dispatch(setDeck(newDeck));
 		dispatch(updateStack([]));
-		dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
+		dispatch(updateLatest({ value: 0, code: "X2" }));
 		changeTurn();
 		socket.emit("updateGame", gameState);
 	};
@@ -55,7 +55,6 @@ const Game = ({ socket, fetchCard }) => {
 	// Sets new cards to players deck
 	const handleDeck = async () => {
 		const latest = {
-			image: player.selectedCards[0].image,
 			value: player.selectedCards[0].value,
 			code: player.selectedCards[0].code,
 		};
@@ -106,7 +105,7 @@ const Game = ({ socket, fetchCard }) => {
 			if (validMove === "ok" && player.selectedCards.length === 4) {
 				handleDeck();
 				dispatch(updateStack([], player.username));
-				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
+				dispatch(updateLatest({ value: 0, code: "X2" }));
 				socket.emit("log", {
 					text: `Kaatuu! ${player.username} pelasi: ${player.selectedCards[0].code}`,
 					room: gameState.room,
@@ -125,7 +124,7 @@ const Game = ({ socket, fetchCard }) => {
 					room: gameState.room,
 				});
 				dispatch(updateStack([], player.username));
-				dispatch(updateLatest({ image: "https://deckofcardsapi.com/static/img/X2.png", value: 0, code: 0 }));
+				dispatch(updateLatest({ value: 0, code: "X2" }));
 			} else if (validMove === "jatka") {
 				handleDeck();
 				socket.emit("log", {

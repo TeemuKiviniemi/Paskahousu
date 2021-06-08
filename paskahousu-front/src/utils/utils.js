@@ -15,8 +15,8 @@ export const returnInt = (text) => {
 
 // Checks if card can be played
 export const checkValidMove = (nextCard, latestCard) => {
-	latestCard = returnInt(latestCard);
-	nextCard = returnInt(nextCard);
+	// latestCard = returnInt(latestCard);
+	// nextCard = returnInt(nextCard);
 
 	if (nextCard === 2) {
 		return "jatka";

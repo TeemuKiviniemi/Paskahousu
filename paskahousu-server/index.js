@@ -1,13 +1,15 @@
+const { Deck } = require("./deck");
 const axios = require("axios");
+const { get } = require("http");
 const app = require("express")();
 const http = require("http").createServer(app);
 const io = require("socket.io")(http, { cors: { origin: "*" } });
 
 let players = [];
 let game = [];
+let decks = [];
 
 io.on("connection", (socket) => {
-	console.log("HERE");
 	socket.on("join_game", async (data) => {
 		let username = data.username;
 		let state = data.gameState;
@@ -30,18 +32,20 @@ io.on("connection", (socket) => {
 			players.push(user);
 
 			if (user.turnNum === 0) {
-				const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
-				game.push({ room: state.room, turn: 0, deckId: data.deck_id });
-				state.deckId = data.deck_id;
+				// const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
+				const newDeck = new Deck();
+				decks.push(newDeck);
+				game.push({ room: state.room, turn: 0, deckId: newDeck.deckId });
+				state.deckId = newDeck.deckId;
 				state.remaining = 49;
 				io.to(socket.id).emit("turn", true);
-				io.to(socket.id).emit("onStart", { deckId: data.deck_id });
+				io.to(socket.id).emit("onStart", newDeck.deckId);
 			} else {
 				gameIndex = game.findIndex((i) => i.room === state.room);
 				state.deckId = game[gameIndex].deckId;
 				state.remaining = 52 - (playersInRoom.length + 1) * 3;
 				io.to(socket.id).emit("turn", false);
-				io.to(socket.id).emit("onStart", { deckId: game[gameIndex].deckId });
+				io.to(socket.id).emit("onStart", game[gameIndex].deckId);
 			}
 
 			io.to(state.room).emit("log", `${username} liittyi peliin`);
@@ -120,6 +124,13 @@ io.on("connection", (socket) => {
 			game = [];
 		}
 	});
+});
+
+app.get("/card/:deckId/:amount/", (req, res) => {
+	const amount = Number(req.params.amount);
+	const deckId = Number(req.params.deckId);
+	const gameDeck = decks.find((item) => item.deckId === deckId);
+	res.json(gameDeck.getAndPop(amount));
 });
 
 http.listen(4000, () => {

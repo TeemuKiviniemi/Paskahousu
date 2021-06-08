@@ -25,7 +25,12 @@ const GameInfo = ({ raiseCardStack }) => {
 			<h2 className="cards-remaining">Cards remaining: {remaining}</h2>
 			<OtherPlayers />
 
-			<LatestImg src={latest.image} turn={turn} alt="" onClick={() => (turn ? raiseCardStack() : null)} />
+			<LatestImg
+				src={`https://deckofcardsapi.com/static/img/${latest.code}.png`}
+				turn={turn}
+				alt=""
+				onClick={() => (turn ? raiseCardStack() : null)}
+			/>
 		</div>
 	);
 };

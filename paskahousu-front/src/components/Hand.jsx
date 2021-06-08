@@ -34,7 +34,7 @@ function Hand({ selectCardsToPlay }) {
 						key={id}
 						turn={player.turn}
 						scale={player.selectedCards.indexOf(card) !== -1 ? "card-scale" : null}
-						src={card.image}
+						src={`https://deckofcardsapi.com/static/img/${card.code}.png`}
 						alt=""
 						onClick={() => selectCardsToPlay(id)}
 					/>
