@@ -8,13 +8,13 @@ const initialState = {
 const playerReducer = (state = initialState, action) => {
 	switch (action.type) {
 		case "SET_USERNAME": {
-			return { ...state, username: action.data };
+			return { ...state, username: action.username };
 		}
 		case "SET_TURN": {
-			return { ...state, turn: action.data };
+			return { ...state, turn: action.turn };
 		}
 		case "SET_SELECTED_CARDS":
-			const card = action.data;
+			const card = action.card;
 
 			// unselect card
 			if (state.selectedCards.indexOf(card) !== -1) {
@@ -22,7 +22,7 @@ const playerReducer = (state = initialState, action) => {
 				return { ...state, selectedCards: cards };
 			}
 			// setSelectedCards empty
-			else if (!action.data) {
+			else if (!action.card) {
 				return { ...state, selectedCards: [] };
 			}
 			// add new card to selected cards
@@ -30,7 +30,10 @@ const playerReducer = (state = initialState, action) => {
 				return { ...state, selectedCards: [...state.selectedCards, card] };
 			}
 		case "SET_DECK":
-			return { ...state, deck: action.data };
+			action.cards.sort((a, b) => {
+				return a.value - b.value;
+			});
+			return { ...state, deck: action.cards };
 
 		default:
 			return state;
@@ -40,28 +43,28 @@ const playerReducer = (state = initialState, action) => {
 export const setUsername = (username) => {
 	return {
 		type: "SET_USERNAME",
-		data: username,
+		username,
 	};
 };
 
 export const setTurn = (turn) => {
 	return {
 		type: "SET_TURN",
-		data: turn,
+		turn,
 	};
 };
 
 export const setSelectedCards = (card) => {
 	return {
 		type: "SET_SELECTED_CARDS",
-		data: card,
+		card,
 	};
 };
 
 export const setDeck = (cards) => {
 	return {
 		type: "SET_DECK",
-		data: cards,
+		cards,
 	};
 };
 
