@@ -1,6 +1,6 @@
 class Deck {
 	constructor() {
-		this.cards = [
+		this.allCards = [
 			{ value: 1, code: "AS" },
 			{ value: 2, code: "2S" },
 			{ value: 3, code: "3S" },
@@ -54,6 +54,7 @@ class Deck {
 			{ value: 12, code: "QH" },
 			{ value: 13, code: "KH" },
 		];
+		this.cards = [...this.allCards];
 		this.deckId = Math.floor(Math.random() * 100000);
 	}
 	getCard() {
@@ -65,7 +66,13 @@ class Deck {
 			const cardIndex = Math.floor(Math.random() * this.cards.length);
 			cardArray.push(this.cards.splice(cardIndex, 1)[0]);
 		}
+		console.log(this.cards.length, this.allCards.length);
 		return { cardsInDeck: this.cards, cards: cardArray, remaining: this.cards.length, deckId: this.deckId };
+	}
+	loadNewCards() {
+		this.cards = [...this.allCards];
+		console.log("NEW DECK", this.cards.length, this.allCards.length);
+		return this.allCards;
 	}
 }
 

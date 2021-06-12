@@ -7,7 +7,7 @@ const io = require("socket.io")(http, { cors: { origin: "*" } });
 
 let players = [];
 let game = [];
-let decks = [];
+let decks = {};
 
 io.on("connection", (socket) => {
 	socket.on("join_game", async (data) => {
@@ -32,9 +32,9 @@ io.on("connection", (socket) => {
 			players.push(user);
 
 			if (user.turnNum === 0) {
-				// const { data } = await axios.get("https://deckofcardsapi.com/api/deck/new/shuffle/?deck_count=1");
 				const newDeck = new Deck();
-				decks.push(newDeck);
+				decks[newDeck.deckId] = newDeck;
+				console.log(decks);
 				game.push({ room: state.room, turn: 0, deckId: newDeck.deckId });
 				state.deckId = newDeck.deckId;
 				state.remaining = 49;
@@ -79,7 +79,7 @@ io.on("connection", (socket) => {
 		gameState.players.forEach((player) => {
 			if (player.cards === 0) {
 				io.to(gameState.room).emit("winner", player.username);
-				axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/shuffle/`);
+				// axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/shuffle/`);
 			}
 		});
 	});
@@ -90,11 +90,11 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("startNew", (oldState) => {
-		console.log({ oldState });
-
 		const startPlayers = oldState.players.map((player) => {
 			return { ...player, cards: 3 };
 		});
+
+		decks[oldState.deckId].loadNewCards();
 
 		const startState = {
 			room: oldState.room,
@@ -102,9 +102,8 @@ io.on("connection", (socket) => {
 			players: startPlayers,
 			remaining: 52 - oldState.players.length * 3,
 			latestCard: {
-				image: "https://deckofcardsapi.com/static/img/X2.png",
 				value: 0,
-				code: 0,
+				code: "X2",
 			},
 			stack: [],
 		};
@@ -129,8 +128,7 @@ io.on("connection", (socket) => {
 app.get("/card/:deckId/:amount/", (req, res) => {
 	const amount = Number(req.params.amount);
 	const deckId = Number(req.params.deckId);
-	const gameDeck = decks.find((item) => item.deckId === deckId);
-	res.json(gameDeck.getAndPop(amount));
+	res.json(decks[deckId].getAndPop(amount));
 });
 
 http.listen(4000, () => {

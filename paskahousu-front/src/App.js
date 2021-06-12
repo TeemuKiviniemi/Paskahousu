@@ -82,7 +82,7 @@ function App() {
 		socket.emit("join_game", { username: player.username, gameState: gameState });
 	};
 
-	// Host (first in room) can start game b
+	// Host (first in room) can start game
 	const startGame = () => {
 		socket.emit("start_game", gameState.room);
 	};
@@ -100,9 +100,10 @@ function App() {
 		}
 	};
 
+	// this will be called on -> socket.on("startNew")
 	const startNewGame = async () => {
 		try {
-			const newCards = await axios.get(`https://deckofcardsapi.com/api/deck/${gameState.deckId}/draw/?count=3`);
+			const newCards = await axios.get(`http://localhost:4000/card/${gameState.deckId}/3`);
 			console.log(newCards.data.remaining);
 			dispatch(setDeck(newCards.data.cards));
 		} catch (err) {
