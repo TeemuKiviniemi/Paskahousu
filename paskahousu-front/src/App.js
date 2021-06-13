@@ -36,6 +36,13 @@ function App() {
 	const gameState = useSelector((state) => state.game);
 	const player = useSelector((state) => state.player);
 
+	// set theme to dark if user device prefers it
+	useEffect(() => {
+		if (window.matchMedia("(prefers-color-scheme: dark)").matches) {
+			setTheme(!theme);
+		}
+	}, []);
+
 	// Open connection to server to get data
 	useEffect(() => {
 		socket.on("turn", (turn) => {
