@@ -6,7 +6,7 @@ const http = require("http").createServer(app);
 const io = require("socket.io")(http, { cors: { origin: "*" } });
 
 let players = [];
-let game = [];
+let game = {};
 let decks = {};
 
 io.on("connection", (socket) => {
@@ -34,33 +34,33 @@ io.on("connection", (socket) => {
 			if (user.turnNum === 0) {
 				const newDeck = new Deck();
 				decks[newDeck.deckId] = newDeck;
-				console.log(decks);
-				game.push({ room: state.room, turn: 0, deckId: newDeck.deckId });
+				game[state.room] = { room: state.room, turn: 0, deckId: newDeck.deckId };
 				state.deckId = newDeck.deckId;
 				state.remaining = 49;
 				io.to(socket.id).emit("turn", true);
 				io.to(socket.id).emit("onStart", newDeck.deckId);
 			} else {
-				gameIndex = game.findIndex((i) => i.room === state.room);
-				state.deckId = game[gameIndex].deckId;
+				// gameIndex = game.findIndex((i) => i.room === state.room);
+				const room = state.room;
+				state.deckId = game[room].deckId;
 				state.remaining = 52 - (playersInRoom.length + 1) * 3;
 				io.to(socket.id).emit("turn", false);
-				io.to(socket.id).emit("onStart", game[gameIndex].deckId);
+				io.to(socket.id).emit("onStart", game[room].deckId);
 			}
 
 			io.to(state.room).emit("log", `${username} liittyi peliin`);
-
 			io.to(state.room).emit("updateGame", state);
 		}
 	});
 
 	socket.on("turn", (data) => {
-		roomIndex = game.findIndex((i) => i.room === data.room);
-		game[roomIndex].turn === data.playerAmount - 1 ? (game[roomIndex].turn = 0) : (game[roomIndex].turn += 1);
+		// roomIndex = game.findIndex((i) => i.room === data.room);
+		const room = data.room;
+		game[room].turn === data.playerAmount - 1 ? (game[room].turn = 0) : (game[room].turn += 1);
 
 		playersInRoom = players.filter((p) => p.room === data.room);
 		playersInRoom.forEach((player) => {
-			if (player.turnNum === game[roomIndex].turn) {
+			if (player.turnNum === game[room].turn) {
 				io.to(player.id).emit("turn", true);
 			} else {
 				io.to(player.id).emit("turn", false);
@@ -112,16 +112,27 @@ io.on("connection", (socket) => {
 	});
 
 	socket.on("disconnect", () => {
+		console.log(game);
+		console.log(decks);
+
 		const user = players.find((u) => u.id === socket.id);
+		console.log(user);
 		if (user) {
 			console.log(`DISCONNECT ${user.username}`);
 			io.to(user.room).emit("log", `${user.username} disconnected from game`);
 		}
 
 		players = players.filter((u) => u.id !== socket.id);
-		if (players.length === 0) {
-			game = [];
+		const playersInRoom = players.filter((player) => player.room === user.room);
+		console.log({ playersInRoom });
+
+		if (user && playersInRoom.length === 0) {
+			const deckId = game[user.room].deckId;
+			delete game[user.room];
+			delete decks[deckId];
 		}
+		console.log(game);
+		console.log(decks);
 	});
 });
 
